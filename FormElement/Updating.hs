@@ -96,10 +96,10 @@ updateNumberUnit :: FormElement -> String -> FormElement
 updateNumberUnit numberElem "" = numberElem{ neMaybeUnitValue = Nothing }
 updateNumberUnit numberElem unit = numberElem{ neMaybeUnitValue = Just unit }
 
-inputFieldUpdate :: FormElement -> IO ()
-inputFieldUpdate element = do
+inputFieldUpdate :: FormElement -> FormContext -> IO ()
+inputFieldUpdate element context = do
   elem2 <- updateElementFromField element
-  updateValidityFlag elem2 (validateElement elem2)
+  updateValidityFlag elem2 context (validateElement elem2)
 
 applyRule :: FormElement -> FormContext -> FormRule -> IO ()
 applyRule NumberElem{..} context rule@(SumRule operandsIdents resultIdent) = do

@@ -32,7 +32,7 @@ noAction _ _ = return ()
 elementFocusHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementFocusHandler element context behaviour _ = do
 --  setLongDescription
-  inputFieldUpdate element   
+  inputFieldUpdate element context  
   applyRules element context
   (focusAction behaviour) element context
 --    where 
@@ -50,7 +50,7 @@ elementFocusHandler element context behaviour _ = do
  
 elementBlurHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementBlurHandler element context behaviour _ = do
-  inputFieldUpdate element 
+  inputFieldUpdate element context
   applyRules element context
   (blurAction behaviour) element context
 
