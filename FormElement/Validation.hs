@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards #-}
 
-module FormElement.Validation where
+module FormEngine.FormElement.Validation where
 
 import Prelude
 import           Data.Maybe (isJust)

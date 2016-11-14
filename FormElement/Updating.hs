@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards #-}
 
-module FormElement.Updating where
+module FormEngine.FormElement.Updating where
 
 import Prelude
 import           Data.Maybe (isJust, isNothing, catMaybes, mapMaybe)
