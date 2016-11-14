@@ -53,8 +53,8 @@ identity2elementUpdated identity1 context = let maybeElement = identity2element 
       e2 <- updateElementFromField element
       return (Just e2)
 
-updateValidityFlag :: FormElement -> Bool -> IO ()
-updateValidityFlag element valid = do
+updateValidityFlag :: FormElement -> FormContext -> Bool -> IO ()
+updateValidityFlag element context valid = do
   --dumptIO " validated element -------------------------------"
   --dumptIO (show $ elementId element)
   flagPlaceJq <- select $ "#" <> flagPlaceId element
@@ -62,13 +62,13 @@ updateValidityFlag element valid = do
   _ <- removeJq oldValidityFlag
   if valid then 
     if Element.isMandatory element then do
-      _ <- appendT "<img class='validity-flag' src='/elixir-questionnaire/static/img/valid.png'/>" flagPlaceJq
+      _ <- appendT (validImg context) flagPlaceJq
       return ()
     else 
       return ()
   else  
     if Element.isMandatory element then do
-      _ <- appendT "<img class='validity-flag' src='/elixir-questionnaire/static/img/invalid.png'/>" flagPlaceJq 
+      _ <- appendT (invalidImg context) flagPlaceJq 
       return ()
     else
       return()

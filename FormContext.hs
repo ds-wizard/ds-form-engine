@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module FormEngine.FormContext (FormContext(..), makeFormContext) where
+module FormEngine.FormContext (FormContext(..)) where
 
 import           FormEngine.FormElement.FormElement as E
 
-data FormContext = FormContext { allElems :: [FormElement] }
-
-makeFormContext :: [FormElement] -> FormContext
-makeFormContext elems = FormContext { allElems = elems }
+data FormContext =
+       FormContext
+         { allElems :: [FormElement]
+         , validImg :: String
+         , invalidImg :: String
+         }
