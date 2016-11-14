@@ -31,31 +31,34 @@ noAction _ _ = return ()
 
 elementFocusHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementFocusHandler element context behaviour _ = do
---  setLongDescription
+  setLongDescription
   inputFieldUpdate element context  
   applyRules element context
-  (focusAction behaviour) element context
---    where 
---    setLongDescription = do
---      paragraphJq <- select $ "#" ++ makeDescSubpaneParagraphId chapter
---      spanJq <- findSelector "span" paragraphJq 
---      let maybeDesc = iLongDescription $ fiDescriptor $ formItem element
---      case maybeDesc of
---        Nothing -> return ()
---        Just desc -> do
---          setHtml desc spanJq
---          appearJq paragraphJq
---          return ()
---      return ()
+  focusAction behaviour element context
+    where 
+    setLongDescription = do
+      paragraphJq <- select $ "#" ++ descSubpaneParagraphId element
+      spanJq <- findSelector "span" paragraphJq 
+      let maybeDesc = iLongDescription $ fiDescriptor $ formItem element
+      case maybeDesc of
+        Nothing -> return ()
+        Just desc -> do
+          _ <- setHtml desc spanJq
+          _ <- appearJq paragraphJq
+          return ()
+      return ()
  
 elementBlurHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementBlurHandler element context behaviour _ = do
   inputFieldUpdate element context
   applyRules element context
-  (blurAction behaviour) element context
-
---  paragraphJq <- select $ "#" ++  makeDescSubpaneParagraphId chapter
---  disappearJq paragraphJq
+  blurAction behaviour element context
+  unsetLongDescription
+    where
+    unsetLongDescription = do
+      paragraphJq <- select $ "#" ++  descSubpaneParagraphId element
+      _ <- disappearJq paragraphJq
+      return ()
 
 -- handleItemMouseEnter :: FormItem -> FormItem -> Handler
 -- handleItemMouseEnter = handleItemFocus
