@@ -2,7 +2,7 @@
 
 module FormEngine.FormContext (FormContext(..), makeFormContext) where
 
-import           FormElement.FormElement as E
+import           FormEngine.FormElement.FormElement as E
 
 data FormContext = FormContext { allElems :: [FormElement] }
 
