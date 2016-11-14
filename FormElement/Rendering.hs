@@ -274,7 +274,7 @@ choiceSwitchHandler element optionElem _ = do
         justDetailed DetailedOptionElem{} = True
       
 
-choiceValidateHandler :: FormElement -> Handler
+choiceValidateHandler :: FormElement -> FormContext -> Handler
 choiceValidateHandler element context _ = do
   isSelected <- isRadioSelected $ radioName element
   updateValidityFlag element context isSelected
@@ -290,8 +290,8 @@ renderRadio element optionElem context jq =
   >>= setAttrInside "identity" (Element.identity element)
   >>= setAttrInside "value" (optionElemValue optionElem)
   >>= (if optionElemIsSelected optionElem then setAttrInside "checked" "checked" else return)
-  >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem ) (choiceValidateHandler context element ))
-  >>= setMouseLeaveHandler (choiceValidateHandler context element )
+  >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem) (choiceValidateHandler element context))
+  >>= setMouseLeaveHandler (choiceValidateHandler element context)
   >>= appendT "<label>" 
   >>= setTextInside (optionElemValue optionElem)
   --   >>= setDescriptionHandlers chapter item
@@ -333,7 +333,7 @@ renderOptionElement element context behaviour jq =
       where
       renderButton :: OptionElement -> JQuery -> IO JQuery
       renderButton optionElem jq2 = 
-        renderRadio element optionElem  jq2
+        renderRadio element optionElem context jq2
         >>= (if optionElem == Prelude.last (cheOptions element) then return else appendT "<br>")
     renderPanes :: [OptionElement] -> JQuery -> IO JQuery
     renderPanes optionElems jq1 = foldlM (flip renderPane) jq1 optionElems

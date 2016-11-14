@@ -57,15 +57,15 @@ formItem SaveButtonElem{ svi, .. } = svi
 formItem SubmitButtonElem{ sbi, .. } = sbi
 
 instance Show FormElement where 
-  show e@ChapterElem{..} = "ChapterElem id=" <> elementId e <> " children: " <> show (FormElement.FormElement.children e)
+  show e@ChapterElem{..} = "ChapterElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
   show e@StringElem{ seValue, .. } = "StringElem id=" <> elementId e <> " value=" <> seValue 
   show e@TextElem{ teValue, .. } = "TextElem id=" <> elementId e <> " value=" <> teValue 
   show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> elementId e <> " value=" <> eeValue 
   show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> elementId e <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
   show e@ChoiceElem{..} = "ChoiceElem id=" <> elementId e
   show e@ListElem{ leMaybeValue, .. } = "ListElem id=" <> elementId e <> " value=" <> show leMaybeValue
-  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> elementId e <> " children: " <> show (FormElement.FormElement.children e)
-  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> elementId e <> " children: " <> show (FormElement.FormElement.children e)
+  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
+  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
   show e@MultipleGroupElem{..} = "MultipleGroupElem id=" <> elementId e
   show e@SaveButtonElem{..} = "SaveButtonElem id=" <> elementId e
   show e@SubmitButtonElem{..} = "SubmitButtonElem id=" <> elementId e
@@ -100,7 +100,7 @@ instance HasChildren FormElement where
   children SimpleGroupElem{ sgeElements, .. } = sgeElements
   children OptionalGroupElem{ ogeElements, .. } = ogeElements 
   children MultipleGroupElem{ mgeElements, .. } = mgeElements
-  children ChoiceElem{ cheOptions, .. } = foldl (\res opt -> res ++ FormElement.FormElement.children opt) [] cheOptions
+  children ChoiceElem{ cheOptions, .. } = foldl (\res opt -> res ++ FormEngine.FormElement.FormElement.children opt) [] cheOptions
   children _ = []
 
 elemChapter :: FormElement -> FormElement
