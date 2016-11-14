@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module FormContext (FormContext(..), makeFormContext) where
+module FormEngine.FormContext (FormContext(..), makeFormContext) where
 
 import           FormElement.FormElement as E
 

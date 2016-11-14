@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, CPP, NamedFieldPuns, RecordWildCards #-}
 
-module FormData (
+module FormEngine.FormData (
   FieldInfo
 , FieldValue
 , FieldDatum
@@ -17,7 +17,7 @@ module FormData (
 , values2Data
 ) where
 
-import FormItem
+import FormEngine.FormItem
 
 #ifdef __HASTE__
 type Text = String

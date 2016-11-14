@@ -2,15 +2,13 @@
 
 module FormElement.Identifiers where
 
-import Data.Maybe (fromMaybe)
-
-import JQuery
-
 import Prelude
+import Data.Maybe (fromMaybe)
 import Data.Monoid
-import FormItem
 
-import FormElement.FormElement as E
+import FormEngine.JQuery
+import FormEngine.FormItem
+import FormEngine.FormElement.FormElement as E
 
 tabId :: FormElement -> Identifier
 tabId element = "tab_" <> elementId element 

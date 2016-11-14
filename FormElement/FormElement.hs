@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards, FlexibleInstances, TypeSynonymInstances #-}
 
-module FormElement.FormElement where
+module FormEngine.FormElement.FormElement where
 
 import           Prelude
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Data.Monoid ((<>))
 
-import           FormItem
-import           FormData
+import           FormEngine.FormItem
+import           FormEngine.FormData
 
 data OptionElement = SimpleOptionElem { schi :: Option, scheSelected :: Bool }
                    | DetailedOptionElem { dchi :: Option, dcheSelected :: Bool , dcheElements :: [FormElement] }

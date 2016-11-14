@@ -7,13 +7,12 @@ import           Data.Maybe (isJust, isNothing, catMaybes, mapMaybe)
 import           Data.Monoid ((<>))
 import           Text.Read (readMaybe)
 
-import           JQuery hiding (parent)
-
-import FormItem
-import FormElement.FormElement as Element
-import FormElement.Identifiers
-import FormElement.Validation
-import FormContext
+import           FormEngine.JQuery hiding (parent)
+import FormEngine.FormItem
+import FormEngine.FormElement.FormElement as Element
+import FormEngine.FormElement.Identifiers
+import FormEngine.FormElement.Validation
+import FormEngine.FormContext
 
 element2jq :: FormElement -> IO JQuery
 element2jq element = selectByName $ elementId element

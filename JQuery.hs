@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module JQuery where
+module FormEngine.JQuery where
 
 import Prelude hiding (last)
 import Data.Monoid ((<>))

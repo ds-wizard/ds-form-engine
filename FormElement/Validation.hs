@@ -2,12 +2,11 @@
 
 module FormElement.Validation where
 
+import Prelude
 import           Data.Maybe (isJust)
 
-import FormElement.FormElement as Element
-
-import Prelude
-import FormItem
+import FormEngine.FormElement.FormElement as Element
+import FormEngine.FormItem
 
 validateElements :: [FormElement] -> Bool
 validateElements elements = all (== True) $ map validateElement $ filter toValidate elements

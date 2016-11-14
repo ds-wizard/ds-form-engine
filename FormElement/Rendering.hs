@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns #-}
 
-module FormElement.Rendering (
+module FormEngine.FormElement.Rendering (
   ElemAction
 , ElemBehaviour(..)
 , noAction
@@ -14,11 +14,11 @@ import Data.Foldable (foldlM)
 import Data.Maybe (fromMaybe)
 --import Haste.DOM
 
-import FormItem 
-import FormElement.FormElement as Element
-import FormElement.Identifiers
-import FormElement.Updating
-import FormContext
+import FormEngine.FormItem 
+import FormEngine.FormElement.FormElement as Element
+import FormEngine.FormElement.Identifiers
+import FormEngine.FormElement.Updating
+import FormEngine.FormContext
 
 import JQuery as JQ
 

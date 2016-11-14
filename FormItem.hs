@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, CPP, NamedFieldPuns, RecordWildCards #-}
 
-module FormItem (
+module FormEngine.FormItem (
   Gender(..)
 , Numbering(..)
 , ItemIdentity

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns #-}
 
-module FormElement.Tabs (
+module FormEngine.FormElement.Tabs (
     renderTabGroup,
     toTab,
     colorizeTabs,
@@ -11,10 +11,9 @@ import           Prelude
 import           Data.Monoid ((<>))
 import           Data.Foldable (foldlM)
 
-import           FormElement.FormElement 
-import           FormElement.Identifiers
-
-import           JQuery as JQ
+import           FormEngine.JQuery as JQ
+import           FormEngine.FormElement.FormElement 
+import           FormEngine.FormElement.Identifiers
 
 tab2tabJq :: FormElement -> IO JQuery
 tab2tabJq tab = select $ "#" <> tabId tab
