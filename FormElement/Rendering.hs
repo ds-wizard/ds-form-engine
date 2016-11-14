@@ -275,13 +275,13 @@ choiceSwitchHandler element optionElem _ = do
       
 
 choiceValidateHandler :: FormElement -> Handler
-choiceValidateHandler element _ = do
+choiceValidateHandler element context _ = do
   isSelected <- isRadioSelected $ radioName element
-  updateValidityFlag element isSelected
+  updateValidityFlag element context isSelected
   -- Now a hack, needs to get the validity from the instances
 
-renderRadio :: FormElement -> OptionElement -> JQuery -> IO JQuery
-renderRadio element optionElem jq = 
+renderRadio :: FormElement -> OptionElement -> FormContext -> JQuery -> IO JQuery
+renderRadio element optionElem context jq = 
   --dumptIO (show $ optionElemValue optionElem)
    -- dumptIO (show $ choiceIisSelected choiceI)
   appendT "<input type='radio'>" jq
@@ -290,8 +290,8 @@ renderRadio element optionElem jq =
   >>= setAttrInside "identity" (Element.identity element)
   >>= setAttrInside "value" (optionElemValue optionElem)
   >>= (if optionElemIsSelected optionElem then setAttrInside "checked" "checked" else return)
-  >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem ) (choiceValidateHandler element ))
-  >>= setMouseLeaveHandler (choiceValidateHandler element )
+  >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem ) (choiceValidateHandler context element ))
+  >>= setMouseLeaveHandler (choiceValidateHandler context element )
   >>= appendT "<label>" 
   >>= setTextInside (optionElemValue optionElem)
   --   >>= setDescriptionHandlers chapter item
