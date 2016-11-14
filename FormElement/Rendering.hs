@@ -14,13 +14,13 @@ import Data.Foldable (foldlM)
 import Data.Maybe (fromMaybe)
 --import Haste.DOM
 
+import FormEngine.JQuery as JQ
 import FormEngine.FormItem 
 import FormEngine.FormElement.FormElement as Element
 import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Updating
 import FormEngine.FormContext
 
-import JQuery as JQ
 
 type ElemAction = FormElement -> FormContext -> IO ()
 
