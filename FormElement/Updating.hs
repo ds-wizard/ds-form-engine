@@ -129,8 +129,8 @@ applyRule _ _ (CopyValueRule operandIdent resultIdent) = do -- now works for sim
 applyRule element _ (IntValueRule fn) = do
   e2 <- updateElementFromField element
   case neMaybeValue e2 of
-    Nothing -> updateValidityFlag e2 False
-    Just value -> updateValidityFlag e2 (fn value)
+    Nothing -> updateValidityFlag e2 context False
+    Just value -> updateValidityFlag e2 context (fn value)
 applyRule element _ ReadOnlyRule = do 
   _ <- element2jq element >>= disableJq 
   return ()
