@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards #-}
 
-module FormElement.Identifiers where
+module FormEngine.FormElement.Identifiers where
 
 import Prelude
 import Data.Maybe (fromMaybe)
