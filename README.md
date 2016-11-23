@@ -1,6 +1,9 @@
 # Form Engine
 
-Simple DOM-based form engine to be used with http://haste-lang.org
+Simple DOM-based form engine to be used with http://haste-lang.org.
+
+- [A trivial example](https://github.com/DataStewardshipPortal/ds-form-example)
+- [A complex questionnaire](https://github.com/DataStewardshipPortal/ds-elixir-cz) built with Form Engine, including the server side and persistency.
 
 ## TODO
 
@@ -9,5 +12,4 @@ Simple DOM-based form engine to be used with http://haste-lang.org
 - Submission validation
 
 ### Refactoring
-- refactor for speed (add all DOM at once)
-- refactor to direct DOM
+- refactor for speed using direct DOM or server-side rendering
