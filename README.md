@@ -18,4 +18,4 @@ Simple DOM-based form engine to be used with http://haste-lang.org.
 
 Built with support of
 
-[![ELIXIR-CZ logo](_assets/logo.jpg)](https://www.elixir-czech.cz/)
+[![ELIXIR-CZ logo](https://raw.githubusercontent.com/DataStewardshipPortal/ds-elixir-cz/master/static/img/logo.jpg)](https://www.elixir-czech.cz/)
