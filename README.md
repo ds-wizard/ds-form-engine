@@ -10,6 +10,7 @@ Simple DOM-based form engine to be used with http://haste-lang.org.
 ### Functionality
 - Recursive validation of group elements
 - Submission validation
+- MultipleGroup implementation
 
 ### Refactoring
 - refactor for speed using direct DOM or server-side rendering
