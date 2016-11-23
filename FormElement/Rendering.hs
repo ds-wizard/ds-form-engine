@@ -29,37 +29,36 @@ data ElemBehaviour = ElemBehaviour { focusAction :: ElemAction, blurAction :: El
 noAction :: ElemAction
 noAction _ _ = return () 
 
+setLongDescription :: FormElement -> IO ()
+setLongDescription element = do
+  paragraphJq <- select $ "#" ++ descSubpaneParagraphId element
+  spanJq <- findSelector "span" paragraphJq 
+  let maybeDesc = iLongDescription $ fiDescriptor $ formItem element
+  case maybeDesc of
+    Nothing -> return ()
+    Just desc -> do
+      _ <- setHtml desc spanJq
+      _ <- appearJq paragraphJq
+      return ()
+  return ()
+
+unsetLongDescription :: FormElement -> IO ()
+unsetLongDescription element = do
+  paragraphJq <- select $ "#" ++  descSubpaneParagraphId element
+  _ <- disappearJq paragraphJq
+  return ()
+
 elementFocusHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementFocusHandler element context behaviour _ = do
-  setLongDescription
   inputFieldUpdate element context  
   applyRules element context
   focusAction behaviour element context
-    where 
-    setLongDescription = do
-      paragraphJq <- select $ "#" ++ descSubpaneParagraphId element
-      spanJq <- findSelector "span" paragraphJq 
-      let maybeDesc = iLongDescription $ fiDescriptor $ formItem element
-      case maybeDesc of
-        Nothing -> return ()
-        Just desc -> do
-          _ <- setHtml desc spanJq
-          _ <- appearJq paragraphJq
-          return ()
-      return ()
  
 elementBlurHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementBlurHandler element context behaviour _ = do
   inputFieldUpdate element context
   applyRules element context
   blurAction behaviour element context
-  unsetLongDescription
-    where
-    unsetLongDescription = do
-      paragraphJq <- select $ "#" ++  descSubpaneParagraphId element
-      _ <- disappearJq paragraphJq
-      return ()
-
 -- handleItemMouseEnter :: FormItem -> FormItem -> Handler
 -- handleItemMouseEnter = handleItemFocus
 
@@ -87,10 +86,7 @@ renderLabel element jq =
     Just label -> case Element.maybeLink element of
       Nothing -> appendT "<label>" jq >>= setTextInside label  
       Just link -> appendT ("<label class=\"link\" onclick=\"" <> link <> "\">") jq 
-       -- >>= inside
           >>= setTextInside label
-       --   >>= appendT "<label>" >>= setTextInside label
-      --  >>= JQ.parent
 
 renderHeading :: Maybe String -> Int -> JQuery -> IO JQuery
 renderHeading Nothing _ jq = return jq  
@@ -106,17 +102,12 @@ renderShortDesc element jq = let maybeDesc = iShortDescription $ fiDescriptor $ 
       Just desc -> 
         appendT "<span class='short-desc'>" jq >>= setTextInside desc
 
---setDescriptionHandlers :: FormItem -> FormItem -> JQuery -> IO JQuery
---setDescriptionHandlers chapter item jq =
---      setFocusHandler (handleItemFocus chapter item) jq
---      >>= setBlurHandler (handleItemBlur chapter item)
---      >>= setMouseEnterHandler (handleItemMouseEnter chapter item)
---      >>= setMouseLeaveHandler (handleItemMouseLeave chapter item)
-
 renderInput :: IO JQuery -> FormElement -> JQuery -> IO JQuery
 renderInput elemIOJq element jq = do
   elemJq <- elemIOJq
   appendT "<table>" jq 
+    >>= setMouseEnterHandler (\_ -> setLongDescription element)
+    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
     >>= inside
       >>= appendT "<tbody>" 
       >>= inside
@@ -157,7 +148,7 @@ renderTextElement element context behaviour jq =
     elemIOJq = select "<textarea>"
       >>= setAttr "name" (elementId element)
       >>= setAttr "identity" (Element.identity element)
-      >>= setText (teValue element)
+      >>= setAttr "value" (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour) 
       >>= onKeyup (elementFocusHandler element context behaviour) 
       >>= onBlur (elementBlurHandler element context behaviour) 
@@ -180,6 +171,8 @@ renderEmailElement element context behaviour jq =
 renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderNumberElement element context behaviour jq = 
   appendT "<table>" jq 
+    >>= setMouseEnterHandler (\_ -> setLongDescription element)
+    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
     >>= inside
       >>= appendT "<tbody>" 
       >>= inside
@@ -297,7 +290,6 @@ renderRadio element optionElem context jq =
   >>= setMouseLeaveHandler (choiceValidateHandler element context)
   >>= appendT "<label>" 
   >>= setTextInside (optionElemValue optionElem)
-  --   >>= setDescriptionHandlers chapter item
    >>= appendT appendix
  where
    appendix :: String
@@ -309,6 +301,8 @@ renderOptionElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> 
 renderOptionElement element context behaviour jq = 
   --dumptIO $ fromMaybe "" (Element.maybeLabel element)
   appendT "<table>" jq 
+    >>= setMouseEnterHandler (\_ -> setLongDescription element)
+    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
     >>= inside
       >>= appendT "<tbody>" 
       >>= inside
@@ -367,11 +361,12 @@ renderOptionalGroup element context behaviour  jq = let lvl = Element.level elem
   --dumptIO $ fromMaybe "" (Element.maybeLabel element)
   appendT "<div class='optional-group'>" jq
   >>= setAttrInside "level" (show lvl)
+  >>= setMouseEnterHandler (\_ -> setLongDescription element)
+  >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
   >>= inside
     >>= renderCheckbox 
     >>= appendT (if not $ null (ogeElements element) then "▾" else "")
     >>= renderShortDesc element 
-    -- >>= setDescriptionHandlers (item, elemance)
     >>= renderOgContents
   >>= JQ.parent
   where

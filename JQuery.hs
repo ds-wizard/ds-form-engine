@@ -38,6 +38,12 @@ readyJq jq fun = do
     ffiReadyJq :: JQuery -> IO () -> IO ()
     ffiReadyJq = ffi "(function (jq, f) { jq.ready(f); })"
 
+parseHTML :: String -> IO JQuery
+parseHTML el = let elJs = toJSString el in doFFI elJs
+  where
+    doFFI :: JSString -> IO JQuery
+    doFFI = ffi "(function (elId) { return $.parseHTML(elId); })"
+
 selectNoCheck :: String -> IO JQuery
 selectNoCheck el = let elJs = toJSString el in doFFI elJs
   where
