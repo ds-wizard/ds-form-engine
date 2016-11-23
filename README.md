@@ -13,3 +13,9 @@ Simple DOM-based form engine to be used with http://haste-lang.org.
 
 ### Refactoring
 - refactor for speed using direct DOM or server-side rendering
+
+----
+
+Built with support of
+
+[![ELIXIR-CZ logo](_assets/logo.jpg)](https://www.elixir-czech.cz/)
