@@ -21,10 +21,9 @@ import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Updating
 import FormEngine.FormContext
 
-
 type ElemAction = FormElement -> FormContext -> IO ()
 
-data ElemBehaviour = ElemBehaviour { focusAction :: ElemAction, blurAction :: ElemAction }
+data ElemBehaviour = ElemBehaviour { focusAction :: ElemAction, blurAction :: ElemAction, detailsAction :: ElemAction }
 
 noAction :: ElemAction
 noAction _ _ = return () 
@@ -102,9 +101,8 @@ renderShortDesc element jq = let maybeDesc = iShortDescription $ fiDescriptor $ 
       Just desc -> 
         appendT "<span class='short-desc'>" jq >>= setTextInside desc
 
-renderInput :: IO JQuery -> FormElement -> JQuery -> IO JQuery
-renderInput elemIOJq element jq = do
-  elemJq <- elemIOJq
+renderInput :: IO JQuery -> FormElement -> FormContext -> ElemBehaviour ->  JQuery -> IO JQuery
+renderInput elemIOJq element context behaviour jq = 
   appendT "<table>" jq 
     >>= setMouseEnterHandler (\_ -> setLongDescription element)
     >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
@@ -113,21 +111,33 @@ renderInput elemIOJq element jq = do
       >>= inside
         >>= appendT "<tr>" 
         >>= inside
-          >>= appendT "<td class='labeltd'>" 
-          >>= inside
-            >>= addClass "more-space"
-            >>= renderLabel element
-          >>= JQ.parent
-          >>= appendT "<td>"
-          >>= inside
-            >>= appendJq elemJq 
-          >>= JQ.parent 
-          >>= appendT "<td>"
-          >>= setAttrInside "id" (flagPlaceId element) 
+          >>= renderQuestionDetails
+          >>= renderLabelCell
+          >>= renderElemCell
+          >>= renderFlagCell
         >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent
     >>= renderShortDesc element 
+    where
+    renderQuestionDetails jq1 = appendT "<td>" jq1
+        >>= inside
+          >>= addClass "more-space"
+          >>= appendT (detailsImg context)
+          >>= setClickHandler (\_ -> detailsAction behaviour element context)
+        >>= JQ.parent
+    renderLabelCell jq1 = appendT "<td class='labeltd'>" jq1
+        >>= inside
+          >>= addClass "more-space"
+          >>= renderLabel element
+        >>= JQ.parent
+    renderElemCell jq1 = do
+      elemJq <- elemIOJq
+      appendT "<td>" jq1
+        >>= inside
+          >>= appendJq elemJq 
+        >>= JQ.parent 
+    renderFlagCell jq1 = appendT "<td>" jq1 >>= setAttrInside "id" (flagPlaceId element) 
 
 renderStringElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderStringElement element context behaviour jq = 
@@ -140,7 +150,7 @@ renderStringElement element context behaviour jq =
       >>= onKeyup (elementFocusHandler element context behaviour) 
       >>= onBlur (elementBlurHandler element context behaviour) 
       >>= onMouseLeave (elementBlurHandler element context behaviour) 
-  in renderInput elemIOJq element  jq 
+  in renderInput elemIOJq element context behaviour jq 
 
 renderTextElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderTextElement element context behaviour jq = 
@@ -153,7 +163,7 @@ renderTextElement element context behaviour jq =
       >>= onKeyup (elementFocusHandler element context behaviour) 
       >>= onBlur (elementBlurHandler element context behaviour) 
       >>= onMouseLeave (elementBlurHandler element context behaviour) 
-  in renderInput elemIOJq element  jq 
+  in renderInput elemIOJq element context behaviour jq 
 
 renderEmailElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderEmailElement element context behaviour jq = 
@@ -166,64 +176,43 @@ renderEmailElement element context behaviour jq =
       >>= onKeyup (elementFocusHandler element context behaviour) 
       >>= onBlur (elementBlurHandler element context behaviour) 
       >>= onMouseLeave (elementBlurHandler element context behaviour) 
-  in renderInput elemIOJq element  jq 
+  in renderInput elemIOJq element context behaviour jq 
 
 renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderNumberElement element context behaviour jq = 
-  appendT "<table>" jq 
-    >>= setMouseEnterHandler (\_ -> setLongDescription element)
-    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
-    >>= inside
-      >>= appendT "<tbody>" 
-      >>= inside
-        >>= appendT "<tr>" 
-        >>= inside
-          >>= appendT "<td class='labeltd'>" 
-          >>= inside
-            >>= addClass "more-space"
-            >>= renderLabel element
-          >>= JQ.parent
-          >>= appendT "<td>"
-          >>= inside
-            >>= appendT "<input type='number'>"
-            >>= setAttrInside "id" (elementId element)
-            >>= setAttrInside "name" (elementId element)
-            >>= setAttrInside "identity" (Element.identity element)
-            >>= setAttrInside "value"  (fromMaybe "" $ show <$> neMaybeValue element)
-            >>= setMouseEnterHandler (elementFocusHandler element context behaviour)
-            >>= setKeyupHandler (elementFocusHandler element context behaviour)
-            >>= setChangeHandler (elementFocusHandler element context behaviour)
-            >>= setBlurHandler (elementBlurHandler element context behaviour)
-            >>= setMouseLeaveHandler (elementBlurHandler element context behaviour)
-            >>= appendT "&nbsp;" 
-            >>= case nfiUnit (formItem element) of 
-              NoUnit -> return 
-              SingleUnit u -> appendT u 
-              MultipleUnit units -> renderUnits units
-          >>= JQ.parent 
-          >>= appendT "<td>"
-          >>= setAttrInside "id" (flagPlaceId element) 
-        >>= JQ.parent
-      >>= JQ.parent
-    >>= JQ.parent
-    >>= renderShortDesc element 
-  where
-    renderUnits :: [String] -> JQuery -> IO JQuery
-    renderUnits units jq1 = foldlM (flip renderUnit) jq1 units
+  let
+    elemIOJq = select "<input type='number'>"
+      >>= setAttr "id" (elementId element)
+      >>= setAttr "name" (elementId element)
+      >>= setAttr "identity" (Element.identity element)
+      >>= setAttr "value"  (fromMaybe "" $ show <$> neMaybeValue element)
+      >>= onMouseEnter (elementFocusHandler element context behaviour) 
+      >>= onKeyup (elementFocusHandler element context behaviour) 
+      >>= onBlur (elementBlurHandler element context behaviour) 
+      >>= onMouseLeave (elementBlurHandler element context behaviour) 
+      >>= appendT "&nbsp;" 
+      >>= case nfiUnit (formItem element) of 
+        NoUnit -> return 
+        SingleUnit u -> appendT u 
+        MultipleUnit units -> renderUnits units
       where
-      renderUnit :: String -> JQuery -> IO JQuery
-      renderUnit unit jq2 =
-        appendT "<input type='radio'>" jq2 
-        >>= setAttrInside "value" unit 
-        >>= setAttrInside "name" (nfiUnitId $ nfi element)
-        >>= setMouseEnterHandler (elementFocusHandler element context behaviour)
-        >>= setClickHandler (elementFocusHandler element context behaviour)
-        >>= setMouseLeaveHandler (elementBlurHandler element context behaviour)
-        >>= case neMaybeUnitValue element of
-          Nothing -> return 
-          Just selectedOption -> if selectedOption == unit then setAttrInside "checked" "checked" else return
-        >>= appendT "<label>" >>= setTextInside unit
-        >>= appendT "&nbsp;&nbsp;"
+        renderUnits :: [String] -> JQuery -> IO JQuery
+        renderUnits units jq1 = foldlM (flip renderUnit) jq1 units
+          where
+          renderUnit :: String -> JQuery -> IO JQuery
+          renderUnit unit jq2 =
+            appendT "<input type='radio'>" jq2 
+            >>= setAttrInside "value" unit 
+            >>= setAttrInside "name" (nfiUnitId $ nfi element)
+            >>= setMouseEnterHandler (elementFocusHandler element context behaviour)
+            >>= setClickHandler (elementFocusHandler element context behaviour)
+            >>= setMouseLeaveHandler (elementBlurHandler element context behaviour)
+            >>= case neMaybeUnitValue element of
+              Nothing -> return 
+              Just selectedOption -> if selectedOption == unit then setAttrInside "checked" "checked" else return
+            >>= appendT "<label>" >>= setTextInside unit
+            >>= appendT "&nbsp;&nbsp;"
+  in renderInput elemIOJq element context behaviour jq 
 
 renderListElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderListElement element context behaviour jq = 
@@ -236,7 +225,7 @@ renderListElement element context behaviour jq =
       >>= onMouseLeave (elementBlurHandler element context behaviour) 
       >>= renderOptions
   in
-    renderInput selectIOJq element  jq
+    renderInput selectIOJq element context behaviour jq
     where
     renderOptions :: JQuery -> IO JQuery
     renderOptions jq1 = foldlM (flip renderOption) jq1 (lfiAvailableOptions (formItem element))
@@ -269,7 +258,6 @@ choiceSwitchHandler element optionElem _ = do
         justDetailed SimpleOptionElem{} = False
         justDetailed DetailedOptionElem{} = True
       
-
 choiceValidateHandler :: FormElement -> FormContext -> Handler
 choiceValidateHandler element context _ = do
   isSelected <- isRadioSelected $ radioName element
@@ -299,30 +287,9 @@ renderRadio element optionElem context jq =
 
 renderOptionElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderOptionElement element context behaviour jq = 
-  --dumptIO $ fromMaybe "" (Element.maybeLabel element)
-  appendT "<table>" jq 
-    >>= setMouseEnterHandler (\_ -> setLongDescription element)
-    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
-    >>= inside
-      >>= appendT "<tbody>" 
-      >>= inside
-        >>= appendT "<tr>" 
-        >>= inside
-          >>= appendT "<td class='labeltd'>" 
-          >>= inside
-            >>= addClass "more-space"
-            >>= renderLabel element
-          >>= JQ.parent
-          >>= appendT "<td>"
-          >>= inside
-            >>= renderButtons (cheOptions element)
-          >>= JQ.parent
-        >>= appendT "<td>"
-        >>= setAttrInside "id" (flagPlaceId element)
-        >>= JQ.parent
-      >>= JQ.parent
-    >>= JQ.parent
-    >>= renderShortDesc element
+  let elemIOJq = select "<div></div>" >>= renderButtons (cheOptions element) 
+  in 
+    renderInput elemIOJq element context behaviour jq
     >>= renderPanes (cheOptions element)
   where
     renderButtons :: [OptionElement] -> JQuery -> IO JQuery
