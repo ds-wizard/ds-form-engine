@@ -9,5 +9,4 @@ data FormContext =
          { allElems :: [FormElement]
          , validImg :: String
          , invalidImg :: String
-         , detailsImg :: String
          }

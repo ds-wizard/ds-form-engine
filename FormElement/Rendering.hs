@@ -3,7 +3,6 @@
 module FormEngine.FormElement.Rendering (
   ElemAction
 , ElemBehaviour(..)
-, noAction
 , foldElements
 , renderElement
 ) where
@@ -20,13 +19,7 @@ import FormEngine.FormElement.FormElement as Element
 import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Updating
 import FormEngine.FormContext
-
-type ElemAction = FormElement -> FormContext -> IO ()
-
-data ElemBehaviour = ElemBehaviour { focusAction :: ElemAction, blurAction :: ElemAction, detailsAction :: ElemAction }
-
-noAction :: ElemAction
-noAction _ _ = return () 
+import FormEngine.Functionality
 
 setLongDescription :: FormElement -> IO ()
 setLongDescription element = do
@@ -51,13 +44,17 @@ elementFocusHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementFocusHandler element context behaviour _ = do
   inputFieldUpdate element context  
   applyRules element context
-  focusAction behaviour element context
+  case focusAction behaviour of
+    Nothing -> return ()
+    Just action -> action element context
  
 elementBlurHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
 elementBlurHandler element context behaviour _ = do
   inputFieldUpdate element context
   applyRules element context
-  blurAction behaviour element context
+  case blurAction behaviour of
+    Nothing -> return ()
+    Just action -> action element context
 -- handleItemMouseEnter :: FormItem -> FormItem -> Handler
 -- handleItemMouseEnter = handleItemFocus
 
@@ -111,7 +108,9 @@ renderInput elemIOJq element context behaviour jq =
       >>= inside
         >>= appendT "<tr>" 
         >>= inside
-          >>= renderQuestionDetails
+          >>= (case detailsFunc behaviour of
+            Nothing -> return
+            Just functionality -> renderQuestionDetails functionality)
           >>= renderLabelCell
           >>= renderElemCell
           >>= renderFlagCell
@@ -120,11 +119,11 @@ renderInput elemIOJq element context behaviour jq =
     >>= JQ.parent
     >>= renderShortDesc element 
     where
-    renderQuestionDetails jq1 = appendT "<td>" jq1
+    renderQuestionDetails detFunc jq1 = appendT "<td>" jq1
         >>= inside
           >>= addClass "more-space"
-          >>= appendT (detailsImg context)
-          >>= setClickHandler (\_ -> detailsAction behaviour element context)
+          >>= appendT (funcImg detFunc)
+          >>= setClickHandler (\_ -> funcAction detFunc element context)
         >>= JQ.parent
     renderLabelCell jq1 = appendT "<td class='labeltd'>" jq1
         >>= inside

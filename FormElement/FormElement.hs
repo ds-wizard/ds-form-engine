@@ -246,4 +246,3 @@ numberElem2TB NumberElem{ neMaybeValue, neMaybeUnitValue, .. } =
     _ -> Nothing -- Nothing or unknown unit
 numberElem2TB _ = Nothing
 
-
