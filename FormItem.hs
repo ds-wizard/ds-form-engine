@@ -32,7 +32,7 @@ type Text = String
 pack :: a -> a
 pack = id
 #else
-import           Data.Text (Text, pack, unpack, concat, intercalate)
+import           Data.Text (Text, pack, intercalate)
 import           Prelude hiding (concat)
 #endif
 
@@ -80,6 +80,8 @@ data FIDescriptor =
          , iTags :: [Tag]
          , iShortDescription :: Maybe Text
          , iLongDescription :: Maybe Text
+         , chapterId :: Maybe Int
+         , questionId :: Maybe Int
          , iLink :: Maybe Text
          , iMandatory :: Bool
          , iRules :: [FormRule]
