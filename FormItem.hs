@@ -32,10 +32,9 @@ type Text = String
 pack :: a -> a
 pack = id
 #else
-import           Data.Text (Text, pack, unpack, concat, intercalate)
-import           Prelude hiding (concat)
+import           Data.Text (Text, pack, intercalate)
+import           Prelude 
 #endif
-
 
 data Gender = Mr
             | Mrs
@@ -101,6 +100,7 @@ data FormItem = StringFI { sfiDescriptor :: FIDescriptor}
               | TextFI { tfiDescriptor :: FIDescriptor}
               | EmailFI { efiDescriptor :: FIDescriptor}
               | NumberFI { nfiDescriptor :: FIDescriptor, nfiUnit :: Unit}
+              | InfoFI { ifiDescriptor :: FIDescriptor, ifiText :: Text }
               | ChoiceFI { chfiDescriptor :: FIDescriptor , chfiAvailableOptions :: [Option] }
               | ListFI { lfiDescriptor :: FIDescriptor , lfiAvailableOptions :: [(Text, Text)] }
               | Chapter { chDescriptor :: FIDescriptor, chItems :: [FormItem] }
@@ -127,6 +127,7 @@ fiDescriptor OptionalGroup{ ogDescriptor, .. } = ogDescriptor
 fiDescriptor MultipleGroup{ mgDescriptor, .. } = mgDescriptor
 fiDescriptor SaveButtonFI{ sviDescriptor, .. } = sviDescriptor
 fiDescriptor SubmitButtonFI{ sbiDescriptor, .. } = sbiDescriptor
+fiDescriptor InfoFI { ifiDescriptor, .. } = ifiDescriptor
 
 fiNumbering :: FormItem -> Numbering
 fiNumbering = iNumbering . fiDescriptor
@@ -209,6 +210,10 @@ incrementNumbering (numbering, item@NumberFI{ .. }) = (incrementAtLevel numberin
   where
     item2 = item { nfiDescriptor = nfiDescriptor { iNumbering = numbering } }
 
+incrementNumbering (numbering, item@InfoFI{ .. }) = (incrementAtLevel numbering, item2)
+  where
+    item2 = item { ifiDescriptor = ifiDescriptor { iNumbering = numbering } }
+
 incrementNumbering (numbering, item@ChoiceFI{ chfiAvailableOptions, .. }) =
   (numbering1, item { chfiDescriptor = chfiDescriptor { iNumbering = numbering }
                     , chfiAvailableOptions = choices2
@@ -260,8 +265,7 @@ incrementNumbering (numbering, item@MultipleGroup{ mgDescriptor, .. }) =
     numbering1 = incrementAtLevel numbering
     items2 = snd $ foldl numberItemInto (incrementLevel numbering, []) mgItems
 
-incrementNumbering (numbering, item@SaveButtonFI{}) = (numbering, item)
-incrementNumbering (numbering, item@SubmitButtonFI{}) = (numbering, item)
+incrementNumbering (numbering, item) = (numbering, item)
 
 prepareForm :: [FormItem] -> [FormItem]
 prepareForm items = snd $ foldl numberItemInto (numbering0, []) items
