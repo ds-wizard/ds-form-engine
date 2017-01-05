@@ -33,14 +33,13 @@ pack :: a -> a
 pack = id
 #else
 import           Data.Text (Text, pack, intercalate)
-import           Prelude hiding (concat)
+import           Prelude
 #endif
-
 
 data Gender = Mr
             | Mrs
 
-data Numbering = NoNumbering 
+data Numbering = NoNumbering
                | Numbering [Int] Int -- current sections numbers and level
   deriving (Eq, Show)
 
@@ -55,15 +54,15 @@ newtype Tag = Tag Text
   deriving (Eq, Show)
 
 tag2Text :: Tag -> Text
-tag2Text (Tag text) = text 
+tag2Text (Tag text) = text
 
 type Param = ItemIdentity
 
 data FormRule = SumRule [Param] Param -- operands and result Identities
               | SumTBsRule [Param] Param
               | CopyValueRule Param Param
-              | ReadOnlyRule 
-              | IntValueRule (Int -> Bool) 
+              | ReadOnlyRule
+              | IntValueRule (Int -> Bool)
 
 instance Show FormRule where
   show (SumRule operands result) = "SumRule @ " ++ show operands ++ " -> " ++ show result
@@ -92,8 +91,8 @@ data Option = SimpleOption Text
             | DetailedOption Numbering Text [FormItem]
   deriving (Show)
 
-instance Eq Option where 
-  o1 == o2 = optionValue o1 == optionValue o2 -- We assume comparing options just in one ChoiceFI 
+instance Eq Option where
+  o1 == o2 = optionValue o1 == optionValue o2 -- We assume comparing options just in one ChoiceFI
 
 optionValue :: Option -> Text
 optionValue (SimpleOption value) = value
@@ -103,6 +102,7 @@ data FormItem = StringFI { sfiDescriptor :: FIDescriptor}
               | TextFI { tfiDescriptor :: FIDescriptor}
               | EmailFI { efiDescriptor :: FIDescriptor}
               | NumberFI { nfiDescriptor :: FIDescriptor, nfiUnit :: Unit}
+              | InfoFI { ifiDescriptor :: FIDescriptor, ifiText :: Text }
               | ChoiceFI { chfiDescriptor :: FIDescriptor , chfiAvailableOptions :: [Option] }
               | ListFI { lfiDescriptor :: FIDescriptor , lfiAvailableOptions :: [(Text, Text)] }
               | Chapter { chDescriptor :: FIDescriptor, chItems :: [FormItem] }
@@ -114,7 +114,7 @@ data FormItem = StringFI { sfiDescriptor :: FIDescriptor}
   deriving (Show)
 
 isItemMandatory :: FormItem -> Bool
-isItemMandatory = iMandatory . fiDescriptor 
+isItemMandatory = iMandatory . fiDescriptor
 
 fiDescriptor :: FormItem -> FIDescriptor
 fiDescriptor StringFI{ sfiDescriptor, .. } = sfiDescriptor
@@ -129,6 +129,7 @@ fiDescriptor OptionalGroup{ ogDescriptor, .. } = ogDescriptor
 fiDescriptor MultipleGroup{ mgDescriptor, .. } = mgDescriptor
 fiDescriptor SaveButtonFI{ sviDescriptor, .. } = sviDescriptor
 fiDescriptor SubmitButtonFI{ sbiDescriptor, .. } = sbiDescriptor
+fiDescriptor InfoFI { ifiDescriptor, .. } = ifiDescriptor
 
 fiNumbering :: FormItem -> Numbering
 fiNumbering = iNumbering . fiDescriptor
@@ -164,10 +165,10 @@ getLevel NoNumbering = 0
 getLevel (Numbering _ level) = level
 
 --assignItemIdentifier :: FormItem -> Numbering -> FormItem
---assignItemIdentifier item numbering 
+--assignItemIdentifier item numbering
 --  | origId == ([], 0) = item { fiDescriptor = (fiDescriptor item) { iNumbering = makeIdentifier numbering } }
 --  | otherwise = item
---  where  
+--  where
 --    origId = fiId item
 
 incrementAtLevel :: Numbering -> Numbering
@@ -210,6 +211,10 @@ incrementNumbering (numbering, item@EmailFI{ .. }) = (incrementAtLevel numbering
 incrementNumbering (numbering, item@NumberFI{ .. }) = (incrementAtLevel numbering, item2)
   where
     item2 = item { nfiDescriptor = nfiDescriptor { iNumbering = numbering } }
+
+incrementNumbering (numbering, item@InfoFI{ .. }) = (incrementAtLevel numbering, item2)
+  where
+    item2 = item { ifiDescriptor = ifiDescriptor { iNumbering = numbering } }
 
 incrementNumbering (numbering, item@ChoiceFI{ chfiAvailableOptions, .. }) =
   (numbering1, item { chfiDescriptor = chfiDescriptor { iNumbering = numbering }
@@ -262,11 +267,9 @@ incrementNumbering (numbering, item@MultipleGroup{ mgDescriptor, .. }) =
     numbering1 = incrementAtLevel numbering
     items2 = snd $ foldl numberItemInto (incrementLevel numbering, []) mgItems
 
-incrementNumbering (numbering, item@SaveButtonFI{}) = (numbering, item)
-incrementNumbering (numbering, item@SubmitButtonFI{}) = (numbering, item)
+incrementNumbering (numbering, item) = (numbering, item)
 
 prepareForm :: [FormItem] -> [FormItem]
 prepareForm items = snd $ foldl numberItemInto (numbering0, []) items
   where
     numbering0 = Numbering (repeat 0) 0
-

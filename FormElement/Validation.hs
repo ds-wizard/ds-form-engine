@@ -47,6 +47,4 @@ validateElement OptionalGroupElem{ ogeChecked, ogeElements, .. }
   | ogeChecked = validateElements ogeElements
   | otherwise = True
 validateElement MultipleGroupElem{ mgeElements, .. } = validateElements mgeElements
-validateElement SaveButtonElem{} = True
-validateElement SubmitButtonElem{} = True
---validateElement _ = error "error unifying validateElement"
+validateElement _ = True
