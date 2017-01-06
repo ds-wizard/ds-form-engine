@@ -69,7 +69,8 @@ renderElement element@StringElem{} context behaviour jq = renderStringElement el
 renderElement element@TextElem{} context behaviour jq = renderTextElement element context behaviour jq
 renderElement element@EmailElem{} context behaviour jq = renderEmailElement element context behaviour jq
 renderElement element@NumberElem{} context behaviour jq = renderNumberElement element context behaviour jq
-renderElement element@ChoiceElem{} context behaviour jq = renderOptionElement element context behaviour jq
+renderElement element@ChoiceElem{} context behaviour jq = renderChoiceElement element context behaviour jq
+renderElement element@InfoElem{} context behaviour jq = renderInfoElement element context behaviour jq
 renderElement element@ListElem{} context behaviour jq = renderListElement element context behaviour jq
 renderElement element@SaveButtonElem{} context _ jq = renderSaveButtonElement element context jq 
 renderElement element@SubmitButtonElem{} context _ jq = renderSubmitButtonElement element context jq 
@@ -284,8 +285,8 @@ renderRadio element optionElem context jq =
      SimpleOptionElem {} -> ""
      DetailedOptionElem {} -> "▾"
 
-renderOptionElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
-renderOptionElement element context behaviour jq = 
+renderChoiceElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+renderChoiceElement element context behaviour jq = 
   let elemIOJq = select "<div></div>" >>= renderButtons (cheOptions element) 
   in 
     renderInput elemIOJq element context behaviour jq
@@ -309,6 +310,23 @@ renderOptionElement element context behaviour jq =
           >>= disappearJq
           >>= foldElements dcheElements context behaviour 
         >>= JQ.parent
+
+renderInfoElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+renderInfoElement element _ _ jq = 
+  appendT "<table>" jq 
+    >>= setMouseEnterHandler (\_ -> setLongDescription element)
+    >>= setMouseLeaveHandler (\_ -> unsetLongDescription element)
+    >>= inside
+      >>= appendT "<tbody>" 
+      >>= inside
+        >>= appendT "<tr>" 
+        >>= inside
+          >>= appendT "<td class='more-space' colspan='2'>"
+          >>= setTextInside (ifiText $ formItem element)
+        >>= JQ.parent
+      >>= JQ.parent
+    >>= JQ.parent
+    >>= renderShortDesc element 
 
 renderSimpleGroup :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderSimpleGroup element context behaviour  jq = let lvl = Element.level element in 

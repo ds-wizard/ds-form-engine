@@ -22,8 +22,8 @@ import FormEngine.FormItem
 #ifdef __HASTE__
 type Text = String
 #else
-import           Data.Text (Text, pack, unpack, concat)
-import           Prelude hiding (concat)
+import           Data.Text (Text)
+import           Prelude 
 #endif
 
 type FieldInfo = (Text, Maybe Text)
@@ -66,8 +66,7 @@ getFieldInfos = foldl foldFieldInfo []
       SimpleGroup{ sgItems, .. } -> getFieldInfos sgItems
       OptionalGroup{ ogItems, .. } -> (fiId item, fiMaybeLabel item) : getFieldInfos ogItems
       MultipleGroup{ mgItems, .. } -> getFieldInfos mgItems
-      SaveButtonFI{} -> []
-      SubmitButtonFI{} -> []
+      _ -> []
 
 getMaybeFFItemValue :: FormItem -> Maybe FormData -> Maybe Text
 getMaybeFFItemValue item maybeFormData = case maybeFormData of
