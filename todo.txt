@@ -1,0 +1,3 @@
+MultipleGroup:
+- Invoke validation events on added groups
+- Storing and reading
