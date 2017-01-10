@@ -46,5 +46,5 @@ validateElement SimpleGroupElem{ sgeElements, .. } = validateElements sgeElement
 validateElement OptionalGroupElem{ ogeChecked, ogeElements, .. } 
   | ogeChecked = validateElements ogeElements
   | otherwise = True
-validateElement MultipleGroupElem{ mgeElements, .. } = validateElements mgeElements
+validateElement MultipleGroupElem{ mgeGroups, .. } = all (== True) $ map (validateElements . Element.children) mgeGroups
 validateElement _ = True
