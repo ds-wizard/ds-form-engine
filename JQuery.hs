@@ -5,8 +5,8 @@ module FormEngine.JQuery where
 import Prelude hiding (last)
 import Data.Monoid ((<>))
 import Haste.DOM (Elem, ElemID, PropID)
-import Haste.Foreign 
-import Haste 
+import Haste.Foreign
+import Haste
 
 type Identifier = String
 type ElementSelector = String
@@ -202,20 +202,20 @@ setWidth = ffi "(function (val, jq) { jq.width(val); return jq; })"
 
 isRadioSelected :: String -> IO Bool
 isRadioSelected name = do
-  selected <- selectRadio name  
+  selected <- selectRadio name
   number <- jqLength selected
-  return (number > 0) 
+  return (number > 0)
 
 getRadioValue :: String -> IO String
 getRadioValue name = do
-  selected <- selectRadio name  
+  selected <- selectRadio name
   getVal selected
 
 -- Dumping ----------------------------------------------------------------
 
 dumpjq :: JQuery -> IO JQuery
 dumpjq jq = do
-  ffiLog jq 
+  ffiLog jq
   return jq
   where
     ffiLog :: JQuery -> IO ()
@@ -223,7 +223,7 @@ dumpjq jq = do
 
 errorIO :: String -> IO ()
 errorIO str = do
-  ffiLog (toJSString str) 
+  ffiLog (toJSString str)
   return ()
   where
     ffiLog :: JSString -> IO ()
@@ -231,7 +231,7 @@ errorIO str = do
 
 dumptIO :: String -> IO ()
 dumptIO str = do
-  ffiLog (toJSString str) 
+  ffiLog (toJSString str)
   return ()
   where
     ffiLog :: JSString -> IO ()
@@ -239,7 +239,7 @@ dumptIO str = do
 
 errorjq :: String -> JQuery -> IO JQuery
 errorjq str jq = do
-  ffiLog (toJSString str) 
+  ffiLog (toJSString str)
   return jq
   where
     ffiLog :: JSString -> IO ()
@@ -247,7 +247,7 @@ errorjq str jq = do
 
 dumptjq :: String -> JQuery -> IO JQuery
 dumptjq str jq = do
-  ffiLog (toJSString str) 
+  ffiLog (toJSString str)
   return jq
   where
     ffiLog :: JSString -> IO ()
@@ -255,7 +255,7 @@ dumptjq str jq = do
 
 alertIO :: String -> IO ()
 alertIO str = do
-  ffiLog (toJSString str) 
+  ffiLog (toJSString str)
   return ()
   where
     ffiLog :: JSString -> IO ()
@@ -264,13 +264,13 @@ alertIO str = do
 -- Events ----------------------------------------------------------------
 
 target :: JSAny -> IO JQuery
-target = ffi "(function (js) {return $(js.target); })" 
+target = ffi "(function (js) {return $(js.target); })"
 
 click :: JQuery -> IO JQuery
 click jq = do
   ffiClick jq
   return jq
-  where 
+  where
     ffiClick :: JQuery -> IO ()
     ffiClick = ffi "(function (jq) { jq.click(); })"
 
@@ -278,7 +278,7 @@ enter :: JQuery -> IO JQuery
 enter jq = do
   ffiEnter jq
   return jq
-  where 
+  where
     ffiEnter :: JQuery -> IO ()
     ffiEnter = ffi "(function (jq) { jq.mouseenter(); })"
 
@@ -286,7 +286,7 @@ blur :: JQuery -> IO JQuery
 blur jq = do
   ffiBlur jq
   return jq
-  where 
+  where
     ffiBlur :: JQuery -> IO ()
     ffiBlur = ffi "(function (jq) { jq.blur(); })"
 
@@ -294,7 +294,7 @@ mouseleave :: JQuery -> IO JQuery
 mouseleave jq = do
   ffiLeave jq
   return jq
-  where 
+  where
     ffiLeave :: JQuery -> IO ()
     ffiLeave = ffi "(function (jq) { jq.mouseleave(); })"
 
@@ -302,7 +302,7 @@ onBlur :: Handler -> JQuery -> IO JQuery
 onBlur ev jq = do
   ffiBlur ev jq
   return jq
-  where 
+  where
     ffiBlur :: Handler -> JQuery -> IO ()
     ffiBlur = ffi "(function (ev, jq) { jq.blur(ev); })"
 
@@ -310,7 +310,7 @@ onKeyup :: Handler -> JQuery -> IO JQuery
 onKeyup ev jq = do
   ffiKeyup ev jq
   return jq
-  where 
+  where
     ffiKeyup :: Handler -> JQuery -> IO ()
     ffiKeyup = ffi "(function (ev, jq) { jq.keyup(ev); })"
 
@@ -318,7 +318,7 @@ onClick :: Handler -> JQuery -> IO JQuery
 onClick ev jq = do
   ffiClick ev jq
   return jq
-  where 
+  where
     ffiClick :: Handler -> JQuery -> IO ()
     ffiClick = ffi "(function (ev, jq) { jq.click(ev); })"
 
@@ -326,7 +326,7 @@ onChange :: Handler -> JQuery -> IO JQuery
 onChange ev jq = do
   ffiChange ev jq
   return jq
-  where 
+  where
     ffiChange :: Handler -> JQuery -> IO ()
     ffiChange = ffi "(function (ev, jq) { jq.change(ev); })"
 
@@ -334,7 +334,7 @@ onMouseEnter :: Handler -> JQuery -> IO JQuery
 onMouseEnter ev jq = do
   ffiMouseEnter ev jq
   return jq
-  where 
+  where
     ffiMouseEnter :: Handler -> JQuery -> IO ()
     ffiMouseEnter = ffi "(function (ev, jq) { jq.mouseenter(ev); })"
 
@@ -342,7 +342,7 @@ onMouseLeave :: Handler -> JQuery -> IO JQuery
 onMouseLeave ev jq = do
   ffiMouseLeave ev jq
   return jq
-  where 
+  where
     ffiMouseLeave :: Handler -> JQuery -> IO ()
     ffiMouseLeave = ffi "(function (ev, jq) { jq.mouseleave(ev); })"
 
@@ -350,7 +350,7 @@ onFocus :: Handler -> JQuery -> IO JQuery
 onFocus ev jq = do
   ffiOnFocus ev jq
   return jq
-  where 
+  where
     ffiOnFocus :: Handler -> JQuery -> IO ()
     ffiOnFocus = ffi "(function (ev, jq) { jq.focus(ev); })"
 
@@ -358,7 +358,7 @@ onScroll :: Handler -> JQuery -> IO JQuery
 onScroll ev jq = do
   ffiOnScroll ev jq
   return jq
-  where 
+  where
     ffiOnScroll :: Handler -> JQuery -> IO ()
     ffiOnScroll = ffi "(function (ev, jq) { jq.scroll(ev); })"
 
@@ -366,7 +366,7 @@ onResize :: Handler -> JQuery -> IO JQuery
 onResize ev jq = do
   ffiOnResize ev jq
   return jq
-  where 
+  where
     ffiOnResize :: Handler -> JQuery -> IO ()
     ffiOnResize = ffi "(function (ev, jq) { jq.resize(ev); })"
 
@@ -374,7 +374,7 @@ resize :: JQuery -> IO JQuery
 resize jq = do
   ffiResize jq
   return jq
-  where 
+  where
     ffiResize :: JQuery -> IO ()
     ffiResize = ffi "(function (jq) { jq.resize(); })"
 
@@ -382,21 +382,21 @@ onLoad :: Handler -> JQuery -> IO JQuery
 onLoad ev jq = do
   ffiOnLoad ev jq
   return jq
-  where 
+  where
     ffiOnLoad :: Handler -> JQuery -> IO ()
     ffiOnLoad = ffi "(function (ev, jq) { jq[0].addEventListener('load', ev); })"
 
 -- Operations ------------------------------------------------------------
 
 showJq :: JQuery -> IO JQuery
-showJq = setCss "visibility" "visible"  
-    
+showJq = setCss "visibility" "visible"
+
 hideJq :: JQuery -> IO JQuery
-hideJq = setCss "visibility" "hidden" 
-  
+hideJq = setCss "visibility" "hidden"
+
 appearJq :: JQuery -> IO JQuery
-appearJq = setCss "display" "block"  
-    
+appearJq = setCss "display" "block"
+
 disappearJq :: JQuery -> IO JQuery
 disappearJq = setCss "display" "none"
 
@@ -407,10 +407,10 @@ disableJq jq = do
 
 inside :: JQuery -> IO JQuery
 inside jq = children jq >>= last
- 
+
 --insideButLast :: JQuery -> IO JQuery
 --insideButLast = children >=> jq >=> prev
- 
+
 setTextInside :: String -> JQuery -> IO JQuery
 setTextInside txt jq = inside jq >>= setText txt >>= parent
 

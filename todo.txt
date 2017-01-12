@@ -1,3 +1,5 @@
 MultipleGroup:
-- Invoke validation events on added groups
 - Storing and reading
+
+Refactoring:
+- mouseleave in rendering as in MultipleGroup

@@ -45,7 +45,7 @@ data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], 
 instance Eq FormElement where
   e1 == e2 = elementId e1 == elementId e2
 
-formItem :: FormElement -> FormItem  
+formItem :: FormElement -> FormItem
 formItem ChapterElem{ chfi, .. } = chfi
 formItem StringElem{ sfi, .. } = sfi
 formItem TextElem{ tfi, .. } = tfi
@@ -90,11 +90,11 @@ setGroup group element@MultipleGroupElem{..} = element { mgeGroup = group }
 setGroup _ element@SaveButtonElem{..} = element
 setGroup _ element@SubmitButtonElem{..} = element
 
-instance Show FormElement where 
+instance Show FormElement where
   show e@ChapterElem{..} = "ChapterElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@StringElem{ seValue, .. } = "StringElem id=" <> elementId e <> " value=" <> seValue 
-  show e@TextElem{ teValue, .. } = "TextElem id=" <> elementId e <> " value=" <> teValue 
-  show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> elementId e <> " value=" <> eeValue 
+  show e@StringElem{ seValue, .. } = "StringElem id=" <> elementId e <> " value=" <> seValue
+  show e@TextElem{ teValue, .. } = "TextElem id=" <> elementId e <> " value=" <> teValue
+  show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> elementId e <> " value=" <> eeValue
   show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> elementId e <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
   show e@ChoiceElem{..} = "ChoiceElem id=" <> elementId e
   show e@InfoElem{..} = "InfoElem id=" <> elementId e
@@ -138,7 +138,7 @@ instance HasChildren ElemGroup where
 instance HasChildren FormElement where
   children ChapterElem{ chElements, .. } = chElements
   children SimpleGroupElem{ sgeElements, .. } = sgeElements
-  children OptionalGroupElem{ ogeElements, .. } = ogeElements 
+  children OptionalGroupElem{ ogeElements, .. } = ogeElements
   children MultipleGroupElem{ mgeGroups, .. } = foldl (\res g -> res ++ egElements g) [] mgeGroups
   children ChoiceElem{ cheOptions, .. } = foldl (\res opt -> res ++ FormEngine.FormElement.FormElement.children opt) [] cheOptions
   children _ = []
@@ -153,7 +153,7 @@ isMandatory = isItemMandatory . formItem
 maybeLabel :: FormElement -> Maybe String
 maybeLabel = iLabel . fiDescriptor . formItem
 
-tags :: FormElement -> [Tag] 
+tags :: FormElement -> [Tag]
 tags = iTags . fiDescriptor . formItem
 
 level :: FormElement -> Int
@@ -192,7 +192,7 @@ strValue _ = ""
 
 makeChapter :: Maybe FormData -> FormItem -> Maybe FormElement
 makeChapter maybeFormData chapter@Chapter{} = Just chapterElem
-  where 
+  where
   chapterElem = ChapterElem
     { chfi = chapter
     , chElements = elems
@@ -259,7 +259,7 @@ makeElem parent1 maybeGroup maybeFormData item@ListFI{} = Just ListElem
   , leParent = parent1
   }
 makeElem parent1 maybeGroup maybeFormData item@SimpleGroup{ sgItems, .. } = Just simpleGroupElem
-  where 
+  where
   simpleGroupElem = SimpleGroupElem
     { sgi = item
     , sgeElements = items
@@ -268,7 +268,7 @@ makeElem parent1 maybeGroup maybeFormData item@SimpleGroup{ sgItems, .. } = Just
     }
   items = mapMaybe (makeElem simpleGroupElem maybeGroup maybeFormData) sgItems
 makeElem parent1 maybeGroup maybeFormData item@OptionalGroup{ ogItems, .. } = Just optionalGroupElem
-  where 
+  where
   optionalGroupElem = OptionalGroupElem
     { ogi = item
     , ogeChecked = isCheckboxChecked item maybeFormData
@@ -278,7 +278,7 @@ makeElem parent1 maybeGroup maybeFormData item@OptionalGroup{ ogItems, .. } = Ju
     }
   items = mapMaybe (makeElem optionalGroupElem maybeGroup maybeFormData) ogItems
 makeElem parent1 maybeGroup maybeFormData item@MultipleGroup{ mgItems, .. } = Just multipleGroupElem
-  where 
+  where
   multipleGroupElem = MultipleGroupElem
     { mgi = item
     , mgeGroups = [group]
