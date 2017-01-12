@@ -10,6 +10,7 @@ module FormEngine.FormElement.Rendering (
 import Prelude
 import Data.Monoid ((<>))
 import Data.Foldable (foldlM)
+import Control.Monad ((>=>))
 import Data.Maybe (fromMaybe)
 --import Haste.DOM
 
@@ -64,7 +65,7 @@ foldElements elems context behaviour jq = foldlM (\jq1 e -> renderElement e cont
 renderElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderElement element@SimpleGroupElem{} context behaviour jq = renderSimpleGroup element context behaviour jq
 renderElement element@OptionalGroupElem{} context behaviour jq = renderOptionalGroup element context behaviour jq
-renderElement MultipleGroupElem{} _ _ jq = errorjq "MultipleGroupElement rendering not implemented yet" jq
+renderElement element@MultipleGroupElem{} context behaviour jq = renderMultipleGroup element context behaviour jq
 renderElement element@StringElem{} context behaviour jq = renderStringElement element context behaviour jq
 renderElement element@TextElem{} context behaviour jq = renderTextElement element context behaviour jq
 renderElement element@EmailElem{} context behaviour jq = renderEmailElement element context behaviour jq
@@ -99,7 +100,7 @@ renderShortDesc element jq = let maybeDesc = iShortDescription $ fiDescriptor $ 
       Just desc ->
         appendT "<span class='short-desc'>" jq >>= setTextInside desc
 
-renderInput :: IO JQuery -> FormElement -> FormContext -> ElemBehaviour ->  JQuery -> IO JQuery
+renderInput :: IO JQuery -> FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderInput elemIOJq element context behaviour jq =
   appendT "<table>" jq
     >>= setMouseEnterHandler (\_ -> setLongDescription element)
@@ -368,10 +369,8 @@ renderOptionalGroup element context behaviour  jq = let lvl = Element.level elem
       checked <- isChecked checkBox
       _ <- if checked then
         appearJq sectionJq
-        --tinkerDiagramForItem chapter item
       else
         disappearJq sectionJq
-        --tinkerDiagramForItemBlur chapter item
       return ()
   renderOgContents :: JQuery -> IO JQuery
   renderOgContents jq1 =
@@ -383,62 +382,67 @@ renderOptionalGroup element context behaviour  jq = let lvl = Element.level elem
           >>= foldElements (ogeElements element) context behaviour
         >>= JQ.parent
 
--- renderMultipleGroup :: FormItem -> FormItem -> FIDescriptor -> Int -> [FormItem] -> Maybe FormData -> JQuery -> IO JQuery
--- renderMultipleGroup chapter item descriptor level mgItems maybeFormData jq = let maybeLabel = iLabel descriptor in
---   appendT "<div class='multiple-group'>" jq
---   >>= (if level > 1 then addClassInside "framed" else return)
---   >>= setAttrInside "level" (show $ fiLevel item)
---   >>= inside
---     >>= renderHeading maybeLabel level
---     >>= renderShortDesc element
---     >>= renderMgLine mgItems 0
---     >>= renderAddButton
---    >>= JQ.parent
---   where
---   renderMgLine :: [FormItem] -> Integer -> JQuery -> IO JQuery
---   renderMgLine mgItems number jq =
---     appendT "<table>" jq >>= inside -- MG item holder
---       >>= appendT "<tbody>" >>= inside
---         >>= appendT "<tr>" >>= inside
---           >>= appendT "<td>" >>= inside
---             >>= appendT "<div class='multiple-section'>"
---             >>= inside
---               >>= foldElements chapter mgItems maybeFormData
---             >>= JQ.parent
---           >>= JQ.parent
---           >>= (if number > 0 then renderRemoveButton else return)
---         >>= JQ.parent
---       >>= JQ.parent
---     >>= JQ.parent
---     where
---     renderRemoveButton :: JQuery -> IO JQuery
---     renderRemoveButton jq =
---       appendT "<td style='vertical-align: middle;'>" jq >>= inside
---         >>= appendT "<img class='button-add' src='static/img/remove.png'/>"
---         >>= setClickHandler removingHandler
---       >>= JQ.parent
---       where
---       removingHandler :: Handler
---       removingHandler ev = do
---         minusButtonJq <- target ev
---         tableJq <- JQ.parent minusButtonJq >>= JQ.parent >>= JQ.parent >>= JQ.parent -- img -> td -> tr -> tbody -> table
---         remove tableJq
---         return ()
---   renderAddButton :: JQuery -> IO JQuery
---   renderAddButton jq =
---     appendT "<img class='button-add' src='static/img/add.png'/>" jq
---     >>= setAttrInside "count" "0"
---     >>= setClickHandler addingHandler
---     where
---     addingHandler :: Handler
---     addingHandler ev = do
---       plusButtonJq <- target ev
---       countStr <- getAttr "count" plusButtonJq
---       let countNum = read (unpack countStr) :: Integer
---       setAttr "count" (show $ countNum + 1) plusButtonJq
---       tableJq <- prev plusButtonJq
---       renderMgLine mgItems countNum tableJq
---       return ()
+renderMultipleGroup :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+renderMultipleGroup element context behaviour jq = let lvl = Element.level element in
+  appendT "<div class='multiple-group'>" jq
+  >>= addClassInside "framed"
+  >>= setAttrInside "level" (show lvl)
+  >>= inside
+    >>= renderHeading (Element.maybeLabel element) lvl
+    >>= renderShortDesc element
+    >>= renderMgGroups (mgeGroups element)
+    >>= renderAddButton
+   >>= JQ.parent
+  where
+  renderMgGroups :: [ElemGroup] -> JQuery -> IO JQuery
+  renderMgGroups groups jq1 = foldlM (flip renderMgGroup) jq1 groups
+
+  renderMgGroup :: ElemGroup -> JQuery -> IO JQuery
+  renderMgGroup group jq2 =
+    appendT "<table>" jq2 >>= inside -- MG item holder
+      >>= appendT "<tbody>" >>= inside
+        >>= appendT "<tr>" >>= inside
+          >>= appendT "<td>" >>= inside
+            >>= appendT "<div class='multiple-section'>"
+            >>= inside
+              >>= foldElements (egElements group) context behaviour
+            >>= JQ.parent
+          >>= JQ.parent
+          >>= (if egNumber group > 0 then renderRemoveButton else return)
+        >>= JQ.parent
+      >>= JQ.parent
+    >>= JQ.parent
+    where
+    renderRemoveButton :: JQuery -> IO JQuery
+    renderRemoveButton jq3 =
+      appendT "<td style='vertical-align: middle;'>" jq3 >>= inside
+        >>= appendT (removeImg context)
+        >>= setClickHandler removingHandler
+      >>= JQ.parent
+      where
+      removingHandler :: Handler
+      removingHandler ev = do
+        minusButtonJq <- target ev
+        tableJq <- JQ.parent minusButtonJq >>= JQ.parent >>= JQ.parent >>= JQ.parent -- img -> td -> tr -> tbody -> table
+        _ <- removeJq tableJq
+        return ()
+  renderAddButton :: JQuery -> IO JQuery
+  renderAddButton jq2 =
+    appendT (addImg context) jq2
+    >>= setAttrInside "count" "1" -- must be refactored after real adding of groups
+    >>= setClickHandler addingHandler
+    where
+    addingHandler :: Handler
+    addingHandler ev = do
+      plusButtonJq <- target ev
+      countStr <- getAttr "count" plusButtonJq
+      let countNum = read (show countStr) :: Int
+      _ <- setAttr "count" (show $ countNum + 1) plusButtonJq
+      let newGroup = ElemGroup { egElements = map (setGroup $ Just newGroup) $ egElements $ Prelude.last $ mgeGroups element, egNumber = countNum }
+      tableJq <- prev plusButtonJq
+      _ <- renderMgGroup newGroup tableJq
+      mapM_ (\e -> selectByName (elementId e) >>= mouseleave) $ egElements newGroup
+      return ()
 
 renderSubmitButtonElement :: FormElement -> FormContext -> JQuery -> IO JQuery
 renderSubmitButtonElement element _ jq =
@@ -454,9 +458,6 @@ renderSubmitButtonElement element _ jq =
     >>= JQ.parent
   >>= JQ.parent
   >>= renderShortDesc element
-  --  where
-  --  submitHandler :: Handler
-  --  submitHandler ev =
 
 renderSaveButtonElement :: FormElement -> FormContext -> JQuery -> IO JQuery
 renderSaveButtonElement element _ jq =

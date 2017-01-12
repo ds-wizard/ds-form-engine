@@ -10,7 +10,7 @@ module FormEngine.FormData (
 , getFieldInfos
 , getMaybeFFItemValue
 , getMaybeFFKeyValue
-, getMaybeNumberFIUnitValue 
+, getMaybeNumberFIUnitValue
 , getMaybeSelectedChoiceValue
 , isCheckboxChecked
 , isOptionSelected
@@ -23,7 +23,7 @@ import FormEngine.FormItem
 type Text = String
 #else
 import           Data.Text (Text)
-import           Prelude 
+import           Prelude
 #endif
 
 type FieldInfo = (Text, Maybe Text)
@@ -41,7 +41,7 @@ getFieldInfos :: [FormItem] -> [FieldInfo]
 getFieldInfos = foldl foldFieldInfo []
   where
   foldFieldInfo :: [FieldInfo] -> FormItem -> [FieldInfo]
-  foldFieldInfo res item = res ++ getFieldInfo 
+  foldFieldInfo res item = res ++ getFieldInfo
     where
     getFieldInfo = case item of
       StringFI{} -> [(fiId item, fiMaybeLabel item)]
@@ -53,7 +53,7 @@ getFieldInfos = foldl foldFieldInfo []
         unitField = case nfiUnit item of
           NoUnit -> []
           SingleUnit _ -> []
-          MultipleUnit _ -> [(nfiUnitId item, Nothing)] 
+          MultipleUnit _ -> [(nfiUnitId item, Nothing)]
       ChoiceFI{ chfiAvailableOptions, .. } -> (fiId item, fiMaybeLabel item) : choicesFields
         where
         choicesFields = foldl foldChoiceFields [] chfiAvailableOptions
@@ -88,7 +88,7 @@ getMaybeNumberFIUnitValue item maybeFormData = case maybeFormData of
       MultipleUnit _ -> lookup (nfiUnitId item) formData
 
 getMaybeSelectedChoiceValue :: FormItem -> Maybe FormData -> Maybe Text
-getMaybeSelectedChoiceValue choiceFI = getMaybeFFKeyValue $ fiId choiceFI 
+getMaybeSelectedChoiceValue choiceFI = getMaybeFFKeyValue $ fiId choiceFI
 
 isCheckboxChecked :: FormItem -> Maybe FormData -> Bool
 isCheckboxChecked item maybeFormData = let maybeRes = getMaybeFFItemValue item maybeFormData in

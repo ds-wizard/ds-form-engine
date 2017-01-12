@@ -1,0 +1,5 @@
+MultipleGroup:
+- Storing and reading
+
+Refactoring:
+- mouseleave in rendering as in MultipleGroup

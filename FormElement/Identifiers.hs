@@ -10,8 +10,11 @@ import FormEngine.JQuery
 import FormEngine.FormItem
 import FormEngine.FormElement.FormElement as E
 
+element2jq :: FormElement -> IO JQuery
+element2jq element = selectByName $ elementId element
+
 tabId :: FormElement -> Identifier
-tabId element = "tab_" <> elementId element 
+tabId element = "tab_" <> elementId element
 
 tabName :: FormElement -> String
 tabName element = fromMaybe "" (iLabel $ fiDescriptor $ formItem element)

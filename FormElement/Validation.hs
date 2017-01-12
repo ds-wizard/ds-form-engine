@@ -10,7 +10,7 @@ import FormEngine.FormItem
 
 validateElements :: [FormElement] -> Bool
 validateElements elements = all (== True) $ map validateElement $ filter toValidate elements
-  where 
+  where
   toValidate :: FormElement -> Bool
   toValidate OptionalGroupElem{} = True -- OptionalGroup needs to be checked specially
   toValidate element = Element.isMandatory element
@@ -24,7 +24,7 @@ validateElement element@NumberElem{ neMaybeValue, neMaybeUnitValue, .. } = value
   where
   valueOK :: Bool
   valueOK = case neMaybeValue of
-    Just neValue -> neValue >= 0   
+    Just neValue -> neValue >= 0
     Nothing -> False
   unitOK :: Bool
   unitOK = case nfiUnit $ formItem element of
@@ -41,10 +41,10 @@ validateElement ChoiceElem{ chefi, cheOptions, .. } =
       validateChoiceElement DetailedOptionElem{ dcheElements, .. } = validateElements dcheElements
   in
     selectionOK && itemsOK
-validateElement ListElem{ leMaybeValue, .. } = isJust leMaybeValue 
+validateElement ListElem{ leMaybeValue, .. } = isJust leMaybeValue
 validateElement SimpleGroupElem{ sgeElements, .. } = validateElements sgeElements
-validateElement OptionalGroupElem{ ogeChecked, ogeElements, .. } 
+validateElement OptionalGroupElem{ ogeChecked, ogeElements, .. }
   | ogeChecked = validateElements ogeElements
   | otherwise = True
-validateElement MultipleGroupElem{ mgeElements, .. } = validateElements mgeElements
+validateElement MultipleGroupElem{ mgeGroups, .. } = all (== True) $ map (validateElements . Element.children) mgeGroups
 validateElement _ = True
