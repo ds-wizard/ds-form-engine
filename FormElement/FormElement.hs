@@ -3,7 +3,7 @@
 module FormEngine.FormElement.FormElement where
 
 import           Prelude
-import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
+import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.Monoid ((<>))
 
 import           FormEngine.FormItem
@@ -98,7 +98,6 @@ setGroupInOption group e@DetailedOptionElem{ dcheElements, .. } = e { dcheElemen
 setGroupInGroup :: Maybe ElemGroup -> ElemGroup -> ElemGroup
 setGroupInGroup parentGr group = group { egElements = map (setGroupOfElem parentGr) (egElements group) }
 
-
 instance Show FormElement where
   show e@ChapterElem{..} = "ChapterElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
   show e@StringElem{ seValue, .. } = "StringElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> seValue
@@ -106,18 +105,9 @@ instance Show FormElement where
   show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> eeValue
   show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
   show e@ChoiceElem{..} = "ChoiceElem id=" <> elementId e <> " groupNo=" <> show (groupNo e)
-  show e@InfoElem{..} = "InfoElem id=" <> elementId e
-  show e@ListElem{ leMaybeValue, .. } = "ListElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> show leMaybeValue
-  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@MultipleGroupElem{..} = "MultipleGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e)
-  show e@SaveButtonElem{..} = "SaveButtonElem id=" <> elementId e
-  show e@SubmitButtonElem{..} = "SubmitButtonElem id=" <> elementId e
 
 elementId :: FormElement -> String
-elementId element
-  | isNothing $ groupNo element = fiId $ formItem element
-  | otherwise = fiId (formItem element) <> "_G" <> fromMaybe "" (show <$> groupNo element)
+elementId = fiId . formItem
 
 parentElem :: FormElement -> FormElement
 parentElem element@ChapterElem{} = element
@@ -141,14 +131,11 @@ instance HasChildren OptionElement where
   children SimpleOptionElem{} = []
   children DetailedOptionElem{ dcheElements, .. } = dcheElements
 
-instance HasChildren ElemGroup where
-  children = egElements
-
 instance HasChildren FormElement where
   children ChapterElem{ chElements, .. } = chElements
   children SimpleGroupElem{ sgeElements, .. } = sgeElements
   children OptionalGroupElem{ ogeElements, .. } = ogeElements
-  children MultipleGroupElem{ mgeGroups, .. } = foldl (\res g -> res ++ egElements g) [] mgeGroups
+  children MultipleGroupElem{ mgeElements, .. } = mgeElements
   children ChoiceElem{ cheOptions, .. } = foldl (\res opt -> res ++ FormEngine.FormElement.FormElement.children opt) [] cheOptions
   children _ = []
 
@@ -207,37 +194,37 @@ makeChapter maybeFormData chapter@Chapter{} = Just chapterElem
     , chElements = elems
     , visited = False
     }
-  elems = mapMaybe (makeElem chapterElem Nothing maybeFormData) (chItems chapter)
+  elems = mapMaybe (makeElem chapterElem maybeFormData) (chItems chapter)
 makeChapter _ _ = Nothing
 
-makeElem :: FormElement -> Maybe ElemGroup -> Maybe FormData -> FormItem -> Maybe FormElement
-makeElem _ _ _ Chapter{} = Nothing -- Chapter can be just root element
-makeElem parent1 maybeGroup maybeFormData item@StringFI{} = Just StringElem
+makeElem :: FormElement -> Maybe FormData -> FormItem -> Maybe FormElement
+makeElem _ _ Chapter{} = Nothing -- Chapter can be just root element
+makeElem parent1 maybeFormData item@StringFI{} = Just StringElem
   { sfi = item
   , seValue = fromMaybe "" (getMaybeFFItemValue item maybeFormData)
   , seGroupNo = egNumber <$> maybeGroup
   , seParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@TextFI{} = Just TextElem
+makeElem parent1 maybeFormData item@TextFI{} = Just TextElem
   { tfi = item
   , teValue = fromMaybe "" (getMaybeFFItemValue item maybeFormData)
   , teGroupNo = egNumber <$> maybeGroup
   , teParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
+makeElem parent1 maybeFormData item@EmailFI{} = Just EmailElem
   { efi = item
   , eeValue = fromMaybe "" (getMaybeFFItemValue item maybeFormData)
   , eeGroupNo = egNumber <$> maybeGroup
   , eeParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
+makeElem parent1 maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
   , neMaybeValue = maybeStr2maybeInt $ getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@ChoiceFI{ chfiAvailableOptions, .. } = Just choiceElem
+makeElem parent1 maybeFormData item@ChoiceFI{ chfiAvailableOptions, .. } = Just choiceElem
   where
     choiceElem = ChoiceElem
       { chefi = item
@@ -255,19 +242,19 @@ makeElem parent1 maybeGroup maybeFormData item@ChoiceFI{ chfiAvailableOptions, .
         selectionElem@(DetailedOption _ _ detailElements) -> DetailedOptionElem
           { dchi = selectionElem
           , dcheSelected = isOptionSelected choice item maybeFormData
-          , dcheElements = mapMaybe (makeElem choiceElem maybeGroup maybeFormData) detailElements
+          , dcheElements = mapMaybe (makeElem choiceElem maybeFormData) detailElements
           }
-makeElem parent1 _ _ item@InfoFI{} = Just InfoElem
+makeElem parent1 _ item@InfoFI{} = Just InfoElem
   { ifi = item
   , ieParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@ListFI{} = Just ListElem
+makeElem parent1 maybeFormData item@ListFI{} = Just ListElem
   { lfi = item
   , leMaybeValue = getMaybeFFItemValue item maybeFormData
   , leGroupNo = egNumber <$> maybeGroup
   , leParent = parent1
   }
-makeElem parent1 maybeGroup maybeFormData item@SimpleGroup{ sgItems, .. } = Just simpleGroupElem
+makeElem parent1 maybeFormData item@SimpleGroup{ sgItems, .. } = Just simpleGroupElem
   where
   simpleGroupElem = SimpleGroupElem
     { sgi = item
@@ -275,8 +262,8 @@ makeElem parent1 maybeGroup maybeFormData item@SimpleGroup{ sgItems, .. } = Just
     , sgeGroupNo = egNumber <$> maybeGroup
     , sgeParent = parent1
     }
-  items = mapMaybe (makeElem simpleGroupElem maybeGroup maybeFormData) sgItems
-makeElem parent1 maybeGroup maybeFormData item@OptionalGroup{ ogItems, .. } = Just optionalGroupElem
+  items = mapMaybe (makeElem simpleGroupElem maybeFormData) sgItems
+makeElem parent1 maybeFormData item@OptionalGroup{ ogItems, .. } = Just optionalGroupElem
   where
   optionalGroupElem = OptionalGroupElem
     { ogi = item
@@ -285,19 +272,19 @@ makeElem parent1 maybeGroup maybeFormData item@OptionalGroup{ ogItems, .. } = Ju
     , ogeGroupNo = egNumber <$> maybeGroup
     , ogeParent = parent1
     }
-  items = mapMaybe (makeElem optionalGroupElem maybeGroup maybeFormData) ogItems
-makeElem parent1 maybeGroup maybeFormData item@MultipleGroup{ mgItems, .. } = Just multipleGroupElem
+  items = mapMaybe (makeElem optionalGroupElem maybeFormData) ogItems
+makeElem parent1 maybeFormData item@MultipleGroup{ mgItems, .. } = Just multipleGroupElem
   where
   multipleGroupElem = MultipleGroupElem
     { mgi = item
     , mgeGroups = [group]
     , mgeGroupNo = egNumber <$> maybeGroup
+    , mgeElements = items
     , mgeParent = parent1
     }
-  group = ElemGroup { egElements = items, egNumber = 0 }
-  items = mapMaybe (makeElem multipleGroupElem (Just group) maybeFormData) mgItems
-makeElem parent1 _ _ item@SaveButtonFI{} = Just SaveButtonElem { svi = item, svParent = parent1 }
-makeElem parent1 _ _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item, sbParent = parent1 }
+  items = mapMaybe (makeElem multipleGroupElem maybeFormData) mgItems
+makeElem parent1 _ item@SaveButtonFI{} = Just SaveButtonElem { svi = item, svParent = parent1 }
+makeElem parent1 _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item, sbParent = parent1 }
 
 numberElem2TB :: FormElement -> Maybe Float
 numberElem2TB NumberElem{ neMaybeValue, neMaybeUnitValue, .. } =
