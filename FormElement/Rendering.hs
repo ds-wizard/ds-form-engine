@@ -10,7 +10,6 @@ module FormEngine.FormElement.Rendering (
 import Prelude
 import Data.Monoid ((<>))
 import Data.Foldable (foldlM)
-import Control.Monad ((>=>))
 import Data.Maybe (fromMaybe)
 --import Haste.DOM
 
@@ -438,7 +437,7 @@ renderMultipleGroup element context behaviour jq = let lvl = Element.level eleme
       countStr <- getAttr "count" plusButtonJq
       let countNum = read (show countStr) :: Int
       _ <- setAttr "count" (show $ countNum + 1) plusButtonJq
-      let newGroup = ElemGroup { egElements = map (setGroup $ Just newGroup) $ egElements $ Prelude.last $ mgeGroups element, egNumber = countNum }
+      let newGroup = ElemGroup { egElements = map (setGroupOfElem $ Just newGroup) $ egElements $ Prelude.last $ mgeGroups element, egNumber = countNum }
       tableJq <- prev plusButtonJq
       _ <- renderMgGroup newGroup tableJq
       mapM_ (\e -> selectByName (elementId e) >>= mouseleave) $ egElements newGroup
