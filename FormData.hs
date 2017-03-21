@@ -22,7 +22,7 @@ import FormEngine.FormItem
 #ifdef __HASTE__
 type Text = String
 #else
-import           Data.Text (Text)
+import           Data.Text.Lazy (Text)
 import           Prelude
 #endif
 

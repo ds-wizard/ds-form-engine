@@ -32,7 +32,7 @@ type Text = String
 pack :: a -> a
 pack = id
 #else
-import           Data.Text (Text, pack, intercalate)
+import           Data.Text.Lazy (Text, pack, intercalate)
 import           Prelude
 #endif
 
