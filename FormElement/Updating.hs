@@ -3,6 +3,7 @@
 module FormEngine.FormElement.Updating where
 
 import Prelude
+import           Data.Text.Lazy (Text, pack)
 import           Data.Maybe (isJust, isNothing, catMaybes, mapMaybe)
 import           Data.Monoid ((<>))
 import           Text.Read (readMaybe)
@@ -14,10 +15,10 @@ import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Validation
 import FormEngine.FormContext
 
-identity2element :: String -> FormContext -> Maybe FormElement
+identity2element :: Text -> FormContext -> Maybe FormElement
 identity2element identity1 context = identity2element' identity1 (allElems context)
 
-identity2element' :: String -> [FormElement] -> Maybe FormElement
+identity2element' :: Text -> [FormElement] -> Maybe FormElement
 identity2element' _ [] = Nothing
 identity2element' identity1 (element : rest)
   | identity element == identity1 = Just element
@@ -27,19 +28,19 @@ identity2element' identity1 (element : rest)
 updateElementFromField :: FormElement -> IO FormElement
 updateElementFromField numberElem@NumberElem{..} = do
   val <- element2jq numberElem >>= getVal
-  unit <- getRadioValue (nfiUnitId $ formItem numberElem)
+  unit <- getRadioValue (show $ nfiUnitId $ formItem numberElem)
   let unit' = if unit == "undefined" then "" else unit
-  let e2 = updateNumberUnit (updateElementValue numberElem val) unit'
+  let e2 = updateNumberUnit (updateElementValue numberElem (pack val)) (pack unit')
   --_ <- dumpjq jq
   --dumptIO $ show unit
   --dumptIO $ show (neMaybeValue e2, neMaybeUnitValue e2)
   return e2
 updateElementFromField element = do
   val <- element2jq element >>= getVal
-  let e2 = updateElementValue element val
+  let e2 = updateElementValue element (pack val)
   return e2
 
-identity2elementUpdated :: String -> FormContext -> IO (Maybe FormElement)
+identity2elementUpdated :: Text -> FormContext -> IO (Maybe FormElement)
 identity2elementUpdated identity1 context = let maybeElement = identity2element identity1 context in
   case maybeElement of
     Nothing -> do
@@ -70,11 +71,11 @@ updateValidityFlag element context valid = do
     else
       return()
 
-updateElementValue :: FormElement -> String -> FormElement
+updateElementValue :: FormElement -> Text -> FormElement
 updateElementValue element@StringElem{} val = element { seValue = val }
 updateElementValue element@TextElem{} val = element { teValue = val }
 updateElementValue element@EmailElem{} val = element { eeValue = val }
-updateElementValue element@NumberElem{} val = element { neMaybeValue = readMaybe val }
+updateElementValue element@NumberElem{} val = element { neMaybeValue = readMaybe (show val) }
 updateElementValue element@ChoiceElem{ cheOptions, .. } val = element { cheOptions = updatedChoiceEs }
   where
   updatedChoiceEs = map updateChoiceE cheOptions
@@ -89,7 +90,7 @@ updateElementValue element@ChoiceElem{ cheOptions, .. } val = element { cheOptio
 updateElementValue element@ListElem{} val = element { leMaybeValue = if val == "" then Nothing else Just val }
 updateElementValue element _ = element
 
-updateNumberUnit :: FormElement -> String -> FormElement
+updateNumberUnit :: FormElement -> Text -> FormElement
 updateNumberUnit numberElem "" = numberElem{ neMaybeUnitValue = Nothing }
 updateNumberUnit numberElem unit = numberElem{ neMaybeUnitValue = Just unit }
 
@@ -106,7 +107,7 @@ applyRule NumberElem{..} context rule@(SumRule operandsIdents resultIdent) = do
     return ()
   else do
     let operandsVals = mapMaybe Element.neMaybeValue $ catMaybes operandMaybeElems
-    resultJq <- selectByIdentity resultIdent
+    resultJq <- selectByIdentity $ show resultIdent
     _ <- setVal (show $ sum operandsVals) resultJq
     return ()
 applyRule NumberElem{..} context (SumTBsRule operandsIdents resultIdent) = do
@@ -115,12 +116,12 @@ applyRule NumberElem{..} context (SumTBsRule operandsIdents resultIdent) = do
     return ()
   else do
     let operandsVals = mapMaybe numberElem2TB $ catMaybes operandMaybeElems
-    resultJq <- selectByIdentity resultIdent
+    resultJq <- selectByIdentity $ show resultIdent
     _ <- setVal (show $ sum operandsVals) resultJq
     return ()
 applyRule _ _ (CopyValueRule operandIdent resultIdent) = do -- now works for simple field values only
-  operandVal <- selectByIdentity operandIdent >>= getVal
-  resultJq <- selectByIdentity resultIdent
+  operandVal <- selectByIdentity (show operandIdent) >>= getVal
+  resultJq <- selectByIdentity (show resultIdent)
   _ <- setVal operandVal resultJq
   return ()
 applyRule element context (IntValueRule fn) = do

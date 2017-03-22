@@ -3,6 +3,7 @@
 module FormEngine.FormElement.FormElement where
 
 import           Prelude
+import           Data.Text.Lazy (pack, Text)
 import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid ((<>))
 
@@ -19,7 +20,7 @@ optionItem :: OptionElement -> Option
 optionItem SimpleOptionElem{ schi, .. } = schi
 optionItem DetailedOptionElem{ dchi, .. } = dchi
 
-optionElemValue :: OptionElement -> String
+optionElemValue :: OptionElement -> Text
 optionElemValue = optionValue . optionItem
 
 optionElemIsSelected :: OptionElement -> Bool
@@ -30,13 +31,13 @@ type ElemGroupNo = Int
 data ElemGroup = ElemGroup { egElements :: [FormElement], egNumber :: ElemGroupNo }
 
 data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], visited :: Bool }
-                 | StringElem { sfi :: FormItem, seValue :: String, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
-                 | TextElem { tfi :: FormItem, teValue :: String, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
-                 | EmailElem { efi :: FormItem, eeValue :: String, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
-                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Int, neMaybeUnitValue :: Maybe String , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
+                 | StringElem { sfi :: FormItem, seValue :: Text, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
+                 | TextElem { tfi :: FormItem, teValue :: Text, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
+                 | EmailElem { efi :: FormItem, eeValue :: Text, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
+                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Int, neMaybeUnitValue :: Maybe Text , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
                  | InfoElem { ifi :: FormItem, ieParent :: FormElement }
                  | ChoiceElem { chefi :: FormItem, cheOptions :: [OptionElement], cheGroupNo :: Maybe ElemGroupNo, cheParent :: FormElement }
-                 | ListElem { lfi :: FormItem, leMaybeValue :: Maybe String, leGroupNo :: Maybe ElemGroupNo, leParent :: FormElement }
+                 | ListElem { lfi :: FormItem, leMaybeValue :: Maybe Text, leGroupNo :: Maybe ElemGroupNo, leParent :: FormElement }
                  | SimpleGroupElem { sgi :: FormItem, sgeElements :: [FormElement], sgeGroupNo :: Maybe ElemGroupNo, sgeParent :: FormElement }
                  | OptionalGroupElem { ogi :: FormItem, ogeChecked :: Bool, ogeElements :: [FormElement], ogeGroupNo :: Maybe ElemGroupNo, ogeParent :: FormElement }
                  | MultipleGroupElem { mgi :: FormItem, mgeGroups :: [ElemGroup], mgeGroupNo :: Maybe ElemGroupNo, mgeParent :: FormElement }
@@ -100,24 +101,24 @@ setGroupInGroup parentGr group = group { egElements = map (setGroupOfElem parent
 
 
 instance Show FormElement where
-  show e@ChapterElem{..} = "ChapterElem id=" <> elementId e <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@StringElem{ seValue, .. } = "StringElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> seValue
-  show e@TextElem{ teValue, .. } = "TextElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> teValue
-  show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> eeValue
-  show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
-  show e@ChoiceElem{..} = "ChoiceElem id=" <> elementId e <> " groupNo=" <> show (groupNo e)
-  show e@InfoElem{..} = "InfoElem id=" <> elementId e
-  show e@ListElem{ leMaybeValue, .. } = "ListElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " value=" <> show leMaybeValue
-  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@MultipleGroupElem{..} = "MultipleGroupElem id=" <> elementId e <> " groupNo=" <> show (groupNo e)
-  show e@SaveButtonElem{..} = "SaveButtonElem id=" <> elementId e
-  show e@SubmitButtonElem{..} = "SubmitButtonElem id=" <> elementId e
+  show e@ChapterElem{..} = "ChapterElem id=" <> show (elementId e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
+  show e@StringElem{ seValue, .. } = "StringElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show seValue
+  show e@TextElem{ teValue, .. } = "TextElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show teValue
+  show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show eeValue
+  show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
+  show e@ChoiceElem{..} = "ChoiceElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e)
+  show e@InfoElem{..} = "InfoElem id=" <> show ( elementId e)
+  show e@ListElem{ leMaybeValue, .. } = "ListElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show leMaybeValue
+  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
+  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
+  show e@MultipleGroupElem{..} = "MultipleGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e)
+  show e@SaveButtonElem{..} = "SaveButtonElem id=" <> show ( elementId e)
+  show e@SubmitButtonElem{..} = "SubmitButtonElem id=" <> show ( elementId e)
 
-elementId :: FormElement -> String
+elementId :: FormElement -> Text
 elementId element
   | isNothing $ groupNo element = fiId $ formItem element
-  | otherwise = fiId (formItem element) <> "_G" <> fromMaybe "" (show <$> groupNo element)
+  | otherwise = fiId (formItem element) <> "_G" <> fromMaybe "" (pack . show <$> groupNo element)
 
 parentElem :: FormElement -> FormElement
 parentElem element@ChapterElem{} = element
@@ -160,7 +161,7 @@ elemChapter element = elemChapter $ parentElem element
 isMandatory :: FormElement -> Bool
 isMandatory = isItemMandatory . formItem
 
-maybeLabel :: FormElement -> Maybe String
+maybeLabel :: FormElement -> Maybe Text
 maybeLabel = iLabel . fiDescriptor . formItem
 
 tags :: FormElement -> [Tag]
@@ -172,31 +173,31 @@ level = fiLevel . formItem
 numbering :: FormElement -> Numbering
 numbering = fiNumbering . formItem
 
-identity :: FormElement -> String
+identity :: FormElement -> Text
 identity = fromMaybe "" . iIdent . fiDescriptor . formItem
 
 rules :: FormElement -> [FormRule]
 rules = iRules . fiDescriptor . formItem
 
-maybeLink :: FormElement -> Maybe String
+maybeLink :: FormElement -> Maybe Text
 maybeLink = iLink . fiDescriptor . formItem
 
-maybeStr2maybeInt :: Maybe String -> Maybe Int
+maybeStr2maybeInt :: Maybe Text -> Maybe Int
 maybeStr2maybeInt ms = ms >>= str2maybeInt
   where
-    str2maybeInt :: String -> Maybe Int
+    str2maybeInt :: Text -> Maybe Int
     str2maybeInt s =
-      let conv = reads s :: [(Int, String)]
+      let conv = reads $ show s :: [(Int, String)]
       in case conv of
         []         -> Nothing
         [(res, _)] -> Just res
         (_, _) : (_ : _) -> Nothing
 
-strValue :: FormElement -> String
+strValue :: FormElement -> Text
 strValue StringElem { seValue, .. } = seValue
 strValue TextElem { teValue, .. } = teValue
 strValue EmailElem { eeValue, .. } = eeValue
-strValue NumberElem { neMaybeValue, .. } = fromMaybe "" (show <$> neMaybeValue)
+strValue NumberElem { neMaybeValue, .. } = fromMaybe "" (pack . show <$> neMaybeValue)
 strValue ListElem { leMaybeValue, .. } = fromMaybe "" leMaybeValue
 strValue _ = ""
 
@@ -291,12 +292,16 @@ makeElem parent1 maybeGroup maybeFormData item@MultipleGroup{ mgItems, .. } = Ju
   where
   multipleGroupElem = MultipleGroupElem
     { mgi = item
-    , mgeGroups = [group]
+    , mgeGroups = groups
     , mgeGroupNo = egNumber <$> maybeGroup
     , mgeParent = parent1
     }
-  group = ElemGroup { egElements = items, egNumber = 0 }
-  items = mapMaybe (makeElem multipleGroupElem (Just group) maybeFormData) mgItems
+  groups = map makeGroup (getMaybeMGItemsValues item maybeFormData)
+    where
+    makeGroup :: FormData -> ElemGroup
+    makeGroup groupFormData = ElemGroup { egElements = items, egNumber = 0 }
+      where
+      items = mapMaybe (makeElem multipleGroupElem maybeGroup (Just groupFormData)) mgItems
 makeElem parent1 _ _ item@SaveButtonFI{} = Just SaveButtonElem { svi = item, svParent = parent1 }
 makeElem parent1 _ _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item, sbParent = parent1 }
 

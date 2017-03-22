@@ -8,6 +8,7 @@ module FormEngine.FormElement.Rendering (
 ) where
 
 import Prelude
+import Data.Text.Lazy (Text, pack)
 import Data.Monoid ((<>))
 import Data.Foldable (foldlM)
 import Data.Maybe (fromMaybe)
@@ -29,7 +30,7 @@ setLongDescription element = do
   case maybeDesc of
     Nothing -> return ()
     Just desc -> do
-      _ <- setHtml desc spanJq
+      _ <- setHtml (show desc) spanJq
       _ <- appearJq paragraphJq
       return ()
   return ()
@@ -81,9 +82,9 @@ renderLabel element jq =
   case Element.maybeLabel element of
     Nothing -> return jq
     Just label -> case Element.maybeLink element of
-      Nothing -> appendT "<label>" jq >>= setTextInside label
-      Just link -> appendT ("<label class=\"link\" onclick=\"" <> link <> "\">") jq
-          >>= setTextInside label
+      Nothing -> appendT "<label>" jq >>= setTextInside (show label)
+      Just link -> appendT ("<label class=\"link\" onclick=\"" <> show link <> "\">") jq
+          >>= setTextInside (show label)
 
 renderHeading :: Maybe String -> Int -> JQuery -> IO JQuery
 renderHeading Nothing _ jq = return jq
@@ -97,7 +98,7 @@ renderShortDesc element jq = let maybeDesc = iShortDescription $ fiDescriptor $ 
     case maybeDesc of
       Nothing -> return jq
       Just desc ->
-        appendT "<span class='short-desc'>" jq >>= setTextInside desc
+        appendT "<span class='short-desc'>" jq >>= setTextInside (show desc)
 
 renderInput :: IO JQuery -> FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderInput elemIOJq element context behaviour jq =
@@ -143,9 +144,9 @@ renderStringElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> 
 renderStringElement element context behaviour jq =
   let
     elemIOJq = select "<input type='text'>"
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
-      >>= setAttr "value" (seValue element)
+      >>= setAttr "name" (show $ elementId element)
+      >>= setAttr "identity" (show $ Element.identity element)
+      >>= setAttr "value" (show $ seValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
@@ -156,9 +157,9 @@ renderTextElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO
 renderTextElement element context behaviour jq =
   let
     elemIOJq = select "<textarea>"
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
-      >>= setAttr "value" (teValue element)
+      >>= setAttr "name" (show $ elementId element)
+      >>= setAttr "identity" (show $ Element.identity element)
+      >>= setAttr "value" (show $ teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
@@ -169,9 +170,9 @@ renderEmailElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> I
 renderEmailElement element context behaviour jq =
   let
     elemIOJq = select "<input type='email'>"
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
-      >>= setAttr "value" (eeValue element)
+      >>= setAttr "name" (show $ elementId element)
+      >>= setAttr "identity" (show $ Element.identity element)
+      >>= setAttr "value" (show $ eeValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
@@ -182,9 +183,9 @@ renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> 
 renderNumberElement element context behaviour jq =
   let
     elemIOJq = select "<input type='number'>"
-      >>= setAttr "id" (elementId element)
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
+      >>= setAttr "id" (show $ elementId element)
+      >>= setAttr "name" (show $ elementId element)
+      >>= setAttr "identity" (show $ Element.identity element)
       >>= setAttr "value"  (fromMaybe "" $ show <$> neMaybeValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       >>= onKeyup (elementFocusHandler element context behaviour)
@@ -193,8 +194,8 @@ renderNumberElement element context behaviour jq =
       >>= appendT "&nbsp;"
       >>= case nfiUnit (formItem element) of
         NoUnit -> return
-        SingleUnit u -> appendT u
-        MultipleUnit units -> renderUnits units
+        SingleUnit u -> appendT $ show u
+        MultipleUnit units -> renderUnits (map show units)
       where
         renderUnits :: [String] -> JQuery -> IO JQuery
         renderUnits units jq1 = foldlM (flip renderUnit) jq1 units
@@ -203,13 +204,13 @@ renderNumberElement element context behaviour jq =
           renderUnit unit jq2 =
             appendT "<input type='radio'>" jq2
             >>= setAttrInside "value" unit
-            >>= setAttrInside "name" (nfiUnitId $ nfi element)
+            >>= setAttrInside "name" (show $ nfiUnitId $ nfi element)
             >>= setMouseEnterHandler (elementFocusHandler element context behaviour)
             >>= setClickHandler (elementFocusHandler element context behaviour)
             >>= setMouseLeaveHandler (elementBlurHandler element context behaviour)
             >>= case neMaybeUnitValue element of
               Nothing -> return
-              Just selectedOption -> if selectedOption == unit then setAttrInside "checked" "checked" else return
+              Just selectedOption -> if selectedOption == pack unit then setAttrInside "checked" "checked" else return
             >>= appendT "<label>" >>= setTextInside unit
             >>= appendT "&nbsp;&nbsp;"
   in renderInput elemIOJq element context behaviour jq
@@ -218,8 +219,8 @@ renderListElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO
 renderListElement element context behaviour jq =
   let
     selectIOJq = select "<select>"
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
+      >>= setAttr "name" (show $ elementId element)
+      >>= setAttr "identity" (show $ Element.identity element)
       >>= onBlur (elementFocusHandler element context behaviour)
       >>= onChange (elementFocusHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
@@ -230,11 +231,11 @@ renderListElement element context behaviour jq =
     renderOptions :: JQuery -> IO JQuery
     renderOptions jq1 = foldlM (flip renderOption) jq1 (lfiAvailableOptions (formItem element))
       where
-      renderOption :: (String, String) -> JQuery -> IO JQuery
+      renderOption :: (Text, Text) -> JQuery -> IO JQuery
       renderOption (listVal, label) jq2 =
         appendT "<option>" jq2
-        >>= setAttrInside "value" listVal
-        >>= setTextInside label
+        >>= setAttrInside "value" (show listVal)
+        >>= setTextInside (show label)
         >>= case leMaybeValue element of
           Nothing -> return
           Just selectedOption -> if listVal == selectedOption then setAttrInside "selected" "selected" else return
@@ -260,7 +261,7 @@ choiceSwitchHandler element optionElem _ = do
 
 choiceValidateHandler :: FormElement -> FormContext -> Handler
 choiceValidateHandler element context _ = do
-  isSelected <- isRadioSelected $ radioName element
+  isSelected <- isRadioSelected $ show $ radioName element
   updateValidityFlag element context isSelected
   -- Now a hack, needs to get the validity from the instances
 
@@ -270,14 +271,14 @@ renderRadio element optionElem context jq =
    -- dumptIO (show $ choiceIisSelected choiceI)
   appendT "<input type='radio'>" jq
   >>= setAttrInside "id" (radioId element optionElem)
-  >>= setAttrInside "name" (radioName element)
-  >>= setAttrInside "identity" (Element.identity element)
-  >>= setAttrInside "value" (optionElemValue optionElem)
+  >>= setAttrInside "name" (show $ radioName element)
+  >>= setAttrInside "identity" (show $ Element.identity element)
+  >>= setAttrInside "value" (show $ optionElemValue optionElem)
   >>= (if optionElemIsSelected optionElem then setAttrInside "checked" "checked" else return)
   >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem) (choiceValidateHandler element context))
   >>= setMouseLeaveHandler (choiceValidateHandler element context)
   >>= appendT "<label>"
-  >>= setTextInside (optionElemValue optionElem)
+  >>= setTextInside (show $ optionElemValue optionElem)
    >>= appendT appendix
  where
    appendix :: String
@@ -322,7 +323,7 @@ renderInfoElement element _ _ jq =
         >>= appendT "<tr>"
         >>= inside
           >>= appendT "<td class='more-space info' colspan='2'>"
-          >>= setTextInside (ifiText $ formItem element)
+          >>= setTextInside (show $ ifiText $ formItem element)
         >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent
@@ -335,7 +336,7 @@ renderSimpleGroup element context behaviour  jq = let lvl = Element.level elemen
   >>= setAttrInside "level" (show lvl)
   >>= (if lvl > 1 then addClassInside "framed" else return)
   >>= inside
-    >>= renderHeading (Element.maybeLabel element) lvl
+    >>= renderHeading (show <$> Element.maybeLabel element) lvl
     >>= renderShortDesc element
     >>= foldElements (sgeElements element) context behaviour
   >>= JQ.parent
@@ -357,7 +358,7 @@ renderOptionalGroup element context behaviour  jq = let lvl = Element.level elem
   renderCheckbox :: JQuery -> IO JQuery
   renderCheckbox jq1 =
     appendT "<input type='checkbox'>" jq1
-    >>= setAttrInside "name" (elementId element)
+    >>= setAttrInside "name" (show $ elementId element)
     >>= (if ogeChecked element then setAttrInside "checked" "checked" else return)
     >>= setClickHandler handler
     >>= renderLabel element
@@ -387,7 +388,7 @@ renderMultipleGroup element context behaviour jq = let lvl = Element.level eleme
   >>= addClassInside "framed"
   >>= setAttrInside "level" (show lvl)
   >>= inside
-    >>= renderHeading (Element.maybeLabel element) lvl
+    >>= renderHeading (show <$> Element.maybeLabel element) lvl
     >>= renderShortDesc element
     >>= renderMgGroups (mgeGroups element)
     >>= renderAddButton
@@ -440,7 +441,7 @@ renderMultipleGroup element context behaviour jq = let lvl = Element.level eleme
       let newGroup = ElemGroup { egElements = map (setGroupOfElem $ Just newGroup) $ egElements $ Prelude.last $ mgeGroups element, egNumber = countNum }
       tableJq <- prev plusButtonJq
       _ <- renderMgGroup newGroup tableJq
-      mapM_ (\e -> selectByName (elementId e) >>= mouseleave) $ egElements newGroup
+      mapM_ (\e -> selectByName (show $ elementId e) >>= mouseleave) $ egElements newGroup
       return ()
 
 renderSubmitButtonElement :: FormElement -> FormContext -> JQuery -> IO JQuery
@@ -451,7 +452,7 @@ renderSubmitButtonElement element _ jq =
         >>= appendT "<td class='labeltd more-space' style='text-align: center'>" >>= inside
           >>= appendT "<input type='button' class='submit'>"
           -- >>= setClickHandler submitHandler
-          >>= setAttrInside "value" (fromMaybe "Submit" (Element.maybeLabel element))
+          >>= setAttrInside "value" (fromMaybe "Submit" (show <$> Element.maybeLabel element))
         >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent
@@ -465,7 +466,7 @@ renderSaveButtonElement element _ jq =
       >>= appendT "<tr>" >>= inside
         >>= appendT "<td class='labeltd more-space' style='text-align: center'>" >>= inside
           >>= appendT "<input type='submit'>"
-          >>= setAttrInside "value" (fromMaybe "Save" (Element.maybeLabel element))
+          >>= setAttrInside "value" (fromMaybe "Save" (show <$> Element.maybeLabel element))
         >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent

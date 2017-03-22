@@ -27,10 +27,11 @@ module FormEngine.FormItem (
 import           Data.Monoid ((<>))
 
 #ifdef __HASTE__
-import           Data.List (intercalate)
-type Text = String
-pack :: a -> a
-pack = id
+import           Data.Text.Lazy (Text, pack, intercalate)
+--import           Data.List (intercalate)
+--type Text = String
+--pack :: a -> a
+--pack = id
 #else
 import           Data.Text.Lazy (Text, pack, intercalate)
 import           Prelude

@@ -1,29 +1,35 @@
 {-# LANGUAGE OverloadedStrings, CPP, NamedFieldPuns, RecordWildCards #-}
 
-module FormEngine.FormData (
-  FieldInfo
-, FieldValue
-, FieldDatum
-, FormData
-, respondentKeyFieldId
-, respondentKeyFieldName
-, getFieldInfos
-, getMaybeFFItemValue
-, getMaybeFFKeyValue
-, getMaybeNumberFIUnitValue
-, getMaybeSelectedChoiceValue
-, isCheckboxChecked
-, isOptionSelected
-, values2Data
-) where
+module FormEngine.FormData
+  ( FieldInfo
+  , FieldValue
+  , FieldDatum
+  , FormData
+  , respondentKeyFieldId
+  , respondentKeyFieldName
+  , getFieldInfos
+  , getMaybeFFItemValue
+  , getMaybeFFKeyValue
+  , getMaybeNumberFIUnitValue
+  , getMaybeSelectedChoiceValue
+  , baseName
+  , getMaybeMGItemsValues
+  , isCheckboxChecked
+  , isOptionSelected
+  , values2Data
+  ) where
+
+import qualified Data.Set as S
+import Data.Monoid ((<>))
 
 import FormEngine.FormItem
 
 #ifdef __HASTE__
-type Text = String
-#else
-import           Data.Text.Lazy (Text)
 import           Prelude
+import           Data.Text.Lazy (Text, dropEnd, breakOnAll, breakOnEnd)
+--type Text = String
+#else
+import           Data.Text.Lazy (Text, dropEnd, breakOnAll, breakOnEnd)
 #endif
 
 type FieldInfo = (Text, Maybe Text) -- (name, mText)
@@ -41,7 +47,7 @@ getFieldInfos :: [FormItem] -> [FieldInfo]
 getFieldInfos = foldl foldFieldInfo []
   where
   foldFieldInfo :: [FieldInfo] -> FormItem -> [FieldInfo]
-  foldFieldInfo res item = res ++ getFieldInfo
+  foldFieldInfo res item = res <> getFieldInfo
     where
     getFieldInfo = case item of
       StringFI{} -> [(fiId item, fiMaybeLabel item)]
@@ -89,6 +95,21 @@ getMaybeNumberFIUnitValue item maybeFormData = case maybeFormData of
 
 getMaybeSelectedChoiceValue :: FormItem -> Maybe FormData -> Maybe Text
 getMaybeSelectedChoiceValue choiceFI = getMaybeFFKeyValue $ fiId choiceFI
+
+baseName :: Text -> Text -- strip the multiple group "_Gx" suffix
+baseName fullName = if null br then fullName else dropEnd 1 n2
+  where
+  br = breakOnAll "G" fullName
+  (n2, _) = head br
+
+getMaybeMGItemsValues :: FormItem -> Maybe FormData -> [FormData]
+getMaybeMGItemsValues item mFormData = case mFormData of
+  Nothing -> []
+  Just formData -> map mkDataGroup groupList
+    where
+    groupList = S.toAscList $ S.fromList $ map ((snd . breakOnEnd "G") . fst) formData
+    mkDataGroup :: Text -> FormData
+    mkDataGroup gNo = filter (\(name, _) -> name == (fiId item <> "_G" <> gNo)) formData
 
 isCheckboxChecked :: FormItem -> Maybe FormData -> Bool
 isCheckboxChecked item maybeFormData = let maybeRes = getMaybeFFItemValue item maybeFormData in
