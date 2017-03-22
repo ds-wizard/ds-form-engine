@@ -26,8 +26,8 @@ import           Data.Text.Lazy (Text)
 import           Prelude
 #endif
 
-type FieldInfo = (Text, Maybe Text)
-type FieldValue = (Text, Maybe Text, Maybe Text)
+type FieldInfo = (Text, Maybe Text) -- (name, mText)
+type FieldValue = (Text, Maybe Text, Maybe Text) -- (name, mText, mValue)
 type FieldDatum = (Text, Text)
 type FormData = [FieldDatum]
 
