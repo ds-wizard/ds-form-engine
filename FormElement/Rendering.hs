@@ -158,7 +158,7 @@ renderTextElement element context behaviour jq =
     elemIOJq = select "<textarea>"
       >>= setAttr "name" (elementId element)
       >>= setAttr "identity" (Element.identity element)
-      >>= setAttr "value" (teValue element)
+      >>= setHtml (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
@@ -181,7 +181,7 @@ renderEmailElement element context behaviour jq =
 renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderNumberElement element context behaviour jq =
   let
-    elemIOJq = select "<input type='number'>"
+    elemIOJq = select "<input type='number' step='any'>"
       >>= setAttr "id" (elementId element)
       >>= setAttr "name" (elementId element)
       >>= setAttr "identity" (Element.identity element)
