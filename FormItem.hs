@@ -62,14 +62,14 @@ data FormRule = SumRule [Param] Param -- operands and result Identities
               | SumTBsRule [Param] Param
               | CopyValueRule Param Param
               | ReadOnlyRule
-              | IntValueRule (Int -> Bool)
+              | NumValueRule (Float -> Bool)
 
 instance Show FormRule where
   show (SumRule operands result) = "SumRule @ " ++ show operands ++ " -> " ++ show result
   show (SumTBsRule operands result) = "SumTBsRule @ " ++ show operands ++ " -> " ++ show result
   show (CopyValueRule operand result) = "CopyValueRule @ " ++ show operand ++ " -> " ++ show result
   show ReadOnlyRule = "ReadOnlyRule"
-  show (IntValueRule _) = "IntValueRule (Int -> Bool)"
+  show (NumValueRule _) = "NumValueRule (Float -> Bool)"
 
 data FIDescriptor =
        FIDescriptor
