@@ -8,6 +8,7 @@ module FormEngine.FormItem (
 , Tag(..)
 , tag2Text
 , FIDescriptor(..)
+, defaultFIDescriptor
 , Option(..)
 , optionValue
 , FormItem(..)
@@ -84,6 +85,19 @@ data FIDescriptor =
          , iRules :: [FormRule]
          }
   deriving (Show)
+
+defaultFIDescriptor :: FIDescriptor
+defaultFIDescriptor = FIDescriptor
+  { iLabel = Nothing
+  , iNumbering = NoNumbering
+  , iIdent = Nothing
+  , iTags = []
+  , iShortDescription = Nothing
+  , iLongDescription = Nothing
+  , iLink = Nothing
+  , iMandatory = False
+  , iRules = []
+  }
 
 data Option = SimpleOption Text
             | DetailedOption Numbering Text [FormItem]
