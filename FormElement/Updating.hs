@@ -124,7 +124,7 @@ applyRule _ _ (CopyValueRule operandIdent resultIdent) = do -- now works for sim
   resultJq <- selectByIdentity (show resultIdent)
   _ <- setVal operandVal resultJq
   return ()
-applyRule element context (IntValueRule fn) = do
+applyRule element context (NumValueRule fn) = do
   e2 <- updateElementFromField element
   case neMaybeValue e2 of
     Nothing -> updateValidityFlag e2 context False

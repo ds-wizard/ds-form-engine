@@ -234,7 +234,7 @@ makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
   }
 makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
-  , neMaybeValue = maybeStr2maybeInt $ getMaybeFFItemValue item maybeFormData
+  , neMaybeValue = maybeStr2maybeFloat $ getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
@@ -308,11 +308,9 @@ makeElem parent1 _ _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item,
 numberElem2TB :: FormElement -> Maybe Float
 numberElem2TB NumberElem{ neMaybeValue, neMaybeUnitValue, .. } =
   case neMaybeUnitValue of
-    Just "MB" -> fmap (* 0.000001) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "GB" -> fmap (* 0.001) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "TB" -> fmap (* 1.0) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "PB" -> fmap (* 1000) (fromIntegral <$> neMaybeValue :: Maybe Float)
+    Just "MB" -> fmap (* 0.000001) neMaybeValue
+    Just "GB" -> fmap (* 0.001) neMaybeValue
+    Just "TB" -> fmap (* 1.0) neMaybeValue
+    Just "PB" -> fmap (* 1000) neMaybeValue
     _ -> Nothing -- Nothing or unknown unit
 numberElem2TB _ = Nothing
-
-
