@@ -35,6 +35,10 @@ data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], 
                  | TextElem { tfi :: FormItem, teValue :: Text, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
                  | EmailElem { efi :: FormItem, eeValue :: Text, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
                  | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Int, neMaybeUnitValue :: Maybe Text , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
+                 | StringElem { sfi :: FormItem, seValue :: String, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
+                 | TextElem { tfi :: FormItem, teValue :: String, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
+                 | EmailElem { efi :: FormItem, eeValue :: String, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
+                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Float, neMaybeUnitValue :: Maybe String , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
                  | InfoElem { ifi :: FormItem, ieParent :: FormElement }
                  | ChoiceElem { chefi :: FormItem, cheOptions :: [OptionElement], cheGroupNo :: Maybe ElemGroupNo, cheParent :: FormElement }
                  | ListElem { lfi :: FormItem, leMaybeValue :: Maybe Text, leGroupNo :: Maybe ElemGroupNo, leParent :: FormElement }
@@ -182,12 +186,12 @@ rules = iRules . fiDescriptor . formItem
 maybeLink :: FormElement -> Maybe Text
 maybeLink = iLink . fiDescriptor . formItem
 
-maybeStr2maybeInt :: Maybe Text -> Maybe Int
-maybeStr2maybeInt ms = ms >>= str2maybeInt
+maybeStr2maybeFloat :: Maybe String -> Maybe Float
+maybeStr2maybeFloat ms = ms >>= str2maybeFloat
   where
-    str2maybeInt :: Text -> Maybe Int
-    str2maybeInt s =
-      let conv = reads $ show s :: [(Int, String)]
+    str2maybeFloat :: String -> Maybe Float
+    str2maybeFloat s =
+      let conv = reads s :: [(Float, String)]
       in case conv of
         []         -> Nothing
         [(res, _)] -> Just res
@@ -234,7 +238,7 @@ makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
   }
 makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
-  , neMaybeValue = maybeStr2maybeInt $ getMaybeFFItemValue item maybeFormData
+  , neMaybeValue = maybeStr2maybeFloat $ getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
@@ -308,11 +312,9 @@ makeElem parent1 _ _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item,
 numberElem2TB :: FormElement -> Maybe Float
 numberElem2TB NumberElem{ neMaybeValue, neMaybeUnitValue, .. } =
   case neMaybeUnitValue of
-    Just "MB" -> fmap (* 0.000001) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "GB" -> fmap (* 0.001) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "TB" -> fmap (* 1.0) (fromIntegral <$> neMaybeValue :: Maybe Float)
-    Just "PB" -> fmap (* 1000) (fromIntegral <$> neMaybeValue :: Maybe Float)
+    Just "MB" -> fmap (* 0.000001) neMaybeValue
+    Just "GB" -> fmap (* 0.001) neMaybeValue
+    Just "TB" -> fmap (* 1.0) neMaybeValue
+    Just "PB" -> fmap (* 1000) neMaybeValue
     _ -> Nothing -- Nothing or unknown unit
 numberElem2TB _ = Nothing
-
-
