@@ -20,6 +20,7 @@ import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Updating
 import FormEngine.FormContext
 import FormEngine.Functionality
+import FormEngine.AutoComplete (getMatches)
 
 setLongDescription :: FormElement -> IO ()
 setLongDescription element = do
@@ -57,6 +58,24 @@ elementBlurHandler element context behaviour _ = do
     Just action -> action element context
 -- handleItemMouseEnter :: FormItem -> FormItem -> Handler
 -- handleItemMouseEnter = handleItemFocus
+
+autoCompleteHandler :: FormElement -> FormContext -> Handler
+autoCompleteHandler element _ _ = do
+  elem2 <- updateElementFromField element
+  elemJq <- element2jq elem2
+  left <- getLeft elemJq
+  --top <- getTop elemJq
+  acBox <- selectById $ autoCompleteBoxId element
+  let matches = getMatches (strValue elem2) (iAutoComplete $ fiDescriptor $ formItem element)
+  _ <- setCss "left" (toPx left) acBox
+  _ <- setHtml "<select size='10'></select>" acBox
+    >>= inside
+      >>= makeOptions matches
+    >>= parent
+  return ()
+  where
+    makeOptions :: [String] -> JQuery -> IO JQuery
+    makeOptions matches1 jq = foldlM (\jq1 i -> appendT ("<option>" <> i <> "</option>") jq1) jq matches1
 
 foldElements :: [FormElement] -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 foldElements elems context behaviour jq = foldlM (\jq1 e -> renderElement e context behaviour jq1) jq elems
@@ -160,10 +179,16 @@ renderTextElement element context behaviour jq =
       >>= setAttr "identity" (Element.identity element)
       >>= setHtml (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (elementFocusHandler element context behaviour)
+      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler element context))
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
-  in renderInput elemIOJq element context behaviour jq
+  in
+    renderInput elemIOJq element context behaviour jq
+    >>= appendT "<div></div>"
+    >>= setAttrInside "id" (autoCompleteBoxId element)
+    >>= addClassInside "autocomplete-suggestions"
+
+  -- <select name='sometext' size='5'> <option>text1</option> <option>text2</option> <option>text3</option> <option>text4</option> <option>text5</option> </select></div>"
 
 renderEmailElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderEmailElement element context behaviour jq =

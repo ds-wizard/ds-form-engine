@@ -83,6 +83,7 @@ data FIDescriptor =
          , iLink :: Maybe Text
          , iMandatory :: Bool
          , iRules :: [FormRule]
+         , iAutoComplete :: [Text]
          }
   deriving (Show)
 
@@ -97,6 +98,7 @@ defaultFIDescriptor = FIDescriptor
   , iLink = Nothing
   , iMandatory = False
   , iRules = []
+  , iAutoComplete = []
   }
 
 data Option = SimpleOption Text

@@ -35,7 +35,6 @@ radioId :: FormElement -> OptionElement -> Identifier
 radioId element optionElem = radioName element <> "_" <> filter (\ch ->
   (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-')
   (optionElemValue optionElem)
-
 optionSectionId :: FormElement -> OptionElement -> Identifier
 optionSectionId element option = radioId element option <> "_detail"
 
@@ -47,5 +46,8 @@ descSubpaneId element = (elementId $ elemChapter element) <> "_desc-subpane"
 
 descSubpaneParagraphId :: FormElement -> Identifier
 descSubpaneParagraphId element = (elementId $ elemChapter element) <> "_desc-subpane-text"
+
+autoCompleteBoxId :: FormElement -> Identifier
+autoCompleteBoxId element = elementId element <> "_autocomplete_box"
 
 

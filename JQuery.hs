@@ -470,6 +470,9 @@ getWindow = ffi "(function () { return $(window); })"
 getTop :: JQuery -> IO Int
 getTop = ffi "(function (jq) { return jq.position().top; })"
 
+getLeft :: JQuery -> IO Int
+getLeft = ffi "(function (jq) { return jq.position().left; })"
+
 toPx :: Int -> String
 toPx val = show val ++ "px"
 
