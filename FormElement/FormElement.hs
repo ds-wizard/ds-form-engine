@@ -3,7 +3,7 @@
 module FormEngine.FormElement.FormElement where
 
 import           Prelude
-import           Data.Text.Lazy (pack, Text)
+import           Data.Text.Lazy (unpack, pack, Text)
 import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid ((<>))
 
@@ -34,11 +34,7 @@ data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], 
                  | StringElem { sfi :: FormItem, seValue :: Text, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
                  | TextElem { tfi :: FormItem, teValue :: Text, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
                  | EmailElem { efi :: FormItem, eeValue :: Text, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
-                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Int, neMaybeUnitValue :: Maybe Text , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
-                 | StringElem { sfi :: FormItem, seValue :: String, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
-                 | TextElem { tfi :: FormItem, teValue :: String, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
-                 | EmailElem { efi :: FormItem, eeValue :: String, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
-                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Float, neMaybeUnitValue :: Maybe String , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
+                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Float, neMaybeUnitValue :: Maybe Text, neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
                  | InfoElem { ifi :: FormItem, ieParent :: FormElement }
                  | ChoiceElem { chefi :: FormItem, cheOptions :: [OptionElement], cheGroupNo :: Maybe ElemGroupNo, cheParent :: FormElement }
                  | ListElem { lfi :: FormItem, leMaybeValue :: Maybe Text, leGroupNo :: Maybe ElemGroupNo, leParent :: FormElement }
@@ -238,7 +234,7 @@ makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
   }
 makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
-  , neMaybeValue = maybeStr2maybeFloat $ getMaybeFFItemValue item maybeFormData
+  , neMaybeValue = maybeStr2maybeFloat $ unpack <$> getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
