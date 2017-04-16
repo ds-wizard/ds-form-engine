@@ -3,7 +3,7 @@
 module FormEngine.FormElement.FormElement where
 
 import           Prelude
-import           Data.Text.Lazy (pack, Text)
+import           Data.Text.Lazy (unpack, pack, Text)
 import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid ((<>))
 
@@ -34,7 +34,7 @@ data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], 
                  | StringElem { sfi :: FormItem, seValue :: Text, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
                  | TextElem { tfi :: FormItem, teValue :: Text, teGroupNo :: Maybe ElemGroupNo, teParent :: FormElement }
                  | EmailElem { efi :: FormItem, eeValue :: Text, eeGroupNo :: Maybe ElemGroupNo, eeParent :: FormElement }
-                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Int, neMaybeUnitValue :: Maybe Text , neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
+                 | NumberElem { nfi :: FormItem, neMaybeValue :: Maybe Float, neMaybeUnitValue :: Maybe Text, neGroupNo :: Maybe ElemGroupNo, neParent :: FormElement }
                  | InfoElem { ifi :: FormItem, ieParent :: FormElement }
                  | ChoiceElem { chefi :: FormItem, cheOptions :: [OptionElement], cheGroupNo :: Maybe ElemGroupNo, cheParent :: FormElement }
                  | ListElem { lfi :: FormItem, leMaybeValue :: Maybe Text, leGroupNo :: Maybe ElemGroupNo, leParent :: FormElement }
@@ -182,12 +182,12 @@ rules = iRules . fiDescriptor . formItem
 maybeLink :: FormElement -> Maybe Text
 maybeLink = iLink . fiDescriptor . formItem
 
-maybeStr2maybeInt :: Maybe Text -> Maybe Int
-maybeStr2maybeInt ms = ms >>= str2maybeInt
+maybeStr2maybeFloat :: Maybe String -> Maybe Float
+maybeStr2maybeFloat ms = ms >>= str2maybeFloat
   where
-    str2maybeInt :: Text -> Maybe Int
-    str2maybeInt s =
-      let conv = reads $ show s :: [(Int, String)]
+    str2maybeFloat :: String -> Maybe Float
+    str2maybeFloat s =
+      let conv = reads s :: [(Float, String)]
       in case conv of
         []         -> Nothing
         [(res, _)] -> Just res
@@ -234,7 +234,7 @@ makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
   }
 makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
-  , neMaybeValue = maybeStr2maybeFloat $ getMaybeFFItemValue item maybeFormData
+  , neMaybeValue = maybeStr2maybeFloat $ unpack <$> getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
