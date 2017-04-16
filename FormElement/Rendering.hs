@@ -11,6 +11,7 @@ import Prelude
 import Data.Monoid ((<>))
 import Data.Foldable (foldlM)
 import Data.Maybe (fromMaybe)
+import Data.Char (chr)
 --import Haste.DOM
 
 import FormEngine.JQuery as JQ
@@ -20,7 +21,7 @@ import FormEngine.FormElement.Identifiers
 import FormEngine.FormElement.Updating
 import FormEngine.FormContext
 import FormEngine.Functionality
-import FormEngine.AutoComplete (getMatches)
+import FormEngine.FormElement.AutoComplete (autoCompleteHandler)
 
 setLongDescription :: FormElement -> IO ()
 setLongDescription element = do
@@ -58,24 +59,6 @@ elementBlurHandler element context behaviour _ = do
     Just action -> action element context
 -- handleItemMouseEnter :: FormItem -> FormItem -> Handler
 -- handleItemMouseEnter = handleItemFocus
-
-autoCompleteHandler :: FormElement -> FormContext -> Handler
-autoCompleteHandler element _ _ = do
-  elem2 <- updateElementFromField element
-  elemJq <- element2jq elem2
-  left <- getLeft elemJq
-  --top <- getTop elemJq
-  acBox <- selectById $ autoCompleteBoxId element
-  let matches = getMatches (strValue elem2) (iAutoComplete $ fiDescriptor $ formItem element)
-  _ <- setCss "left" (toPx left) acBox
-  _ <- setHtml "<select size='10'></select>" acBox
-    >>= inside
-      >>= makeOptions matches
-    >>= parent
-  return ()
-  where
-    makeOptions :: [String] -> JQuery -> IO JQuery
-    makeOptions matches1 jq = foldlM (\jq1 i -> appendT ("<option>" <> i <> "</option>") jq1) jq matches1
 
 foldElements :: [FormElement] -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 foldElements elems context behaviour jq = foldlM (\jq1 e -> renderElement e context behaviour jq1) jq elems
@@ -179,7 +162,7 @@ renderTextElement element context behaviour jq =
       >>= setAttr "identity" (Element.identity element)
       >>= setHtml (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler element context))
+      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler ';' element context))
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
   in
