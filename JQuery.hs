@@ -134,6 +134,9 @@ setAttr k v jq = let kJs = toJSString k; vJs = toJSString v in doFFI kJs vJs jq
     doFFI :: JSString -> JSString -> JQuery -> IO JQuery
     doFFI = ffi "(function (k, v, jq) { jq.attr(k, v); return jq; })"
 
+setSelected :: JQuery -> IO JQuery
+setSelected = ffi "(function (jq) { jq.prop('selected', true); return jq; })"
+
 getCss :: String -> JQuery -> IO JSString
 getCss key jq = let keyJs = toJSString key in doFFI keyJs jq
   where
