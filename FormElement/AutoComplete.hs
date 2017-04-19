@@ -9,6 +9,7 @@ import Data.Foldable (foldlM)
 import Data.Monoid ((<>))
 import Data.List (isInfixOf)
 import Data.Char (isSpace)
+import Haste.Foreign
 
 import FormEngine.JQuery as JQ
 import FormEngine.FormItem
@@ -19,7 +20,7 @@ import FormEngine.FormElement.Updating
 
 getMatches :: Maybe String -> [String] -> [String]
 getMatches Nothing _ = []
-getMatches (Just pattern) list = filter (\item -> pattern `isInfixOf` item) list
+getMatches (Just pattrn) lst = filter (\item -> pattrn `isInfixOf` item) lst
 
 getAcExprFromText :: String -> Char -> Maybe String
 getAcExprFromText str delim
@@ -37,10 +38,10 @@ cutLastPart str1 str2 delim
 getAcExprFromString :: String -> Maybe String
 getAcExprFromString str = let str2 = strip str in
   if length str2 < 3 then Nothing
-  else Just $ str2
+  else Just str2
     where
     strip :: String -> String
-    strip s = dropWhile isSpace s
+    strip = dropWhile isSpace
 
 doAc :: String -> String -> Char -> String
 doAc txt ac delim = let pre = fst $ cutLastPart txt "" delim in
@@ -53,29 +54,33 @@ autoCompleteHandler delim element _ ev = do
   elem2 <- updateElementFromField element
   elemJq <- element2jq elem2
   left <- getLeft elemJq
-  --top <- getTop elemJq
   acBoxJq <- selectById $ autoCompleteBoxId element
   keyCode <- getEvKeyCode ev
   if keyCode == "40" then do
     selJq <- findSelector "select" acBoxJq
     _ <- setFocus selJq
+    _<- findSelector "option:eq(0)" selJq >>= setSelected
     return ()
   else do
-    let matches = getMatches (getAcExprFromText (strValue elem2) delim) (iAutoComplete $ fiDescriptor $ formItem element)
-    _ <- if not (null matches) then do
+    let acExpr = getAcExprFromText (strValue elem2) delim
+    let matches = getMatches acExpr (iAutoComplete $ fiDescriptor $ formItem element)
+    if not (null matches) then do
       _ <- setCss "left" (toPx left) acBoxJq
-      setHtml "<select></select>" acBoxJq
-      >>= setAttrInside "size" (if length matches > 10 then "10" else show $ length matches)
-    --  >>= setCssInside "height" "0"
-      >>= inside
-        >>= makeOptions matches
-      >>= parent
-      >>= setKeypressHandler (copyFromAcHandler elemJq acBoxJq)
-      >>= appearJq
-     -- >>= animateInside
-    else
-      disappearJq acBoxJq
-    return ()
+      selJq <- setHtml "<select></select>" acBoxJq
+        >>= setAttrInside "size" (if length matches > 10 then "10" else show $ length matches)
+        >>= inside
+          >>= makeOptions matches
+        >>= parent
+        >>= setKeypressHandler (copyFromAcHandler elemJq acBoxJq)
+        >>= appearJq
+      --h <- getHeight selJq
+      --_ <- setCss "height" "0" selJq >>= animate h
+      --_ <- setCss "height" (toPx h) acBoxJq
+      return ()
+    else do
+      _ <- disappearJq acBoxJq
+      return()
+  return()
   where
     makeOptions :: [String] -> JQuery -> IO JQuery
     makeOptions matches1 jq = foldlM (\jq1 i -> appendT ("<option>" <> i <> "</option>") jq1) jq matches1
@@ -91,3 +96,7 @@ autoCompleteHandler delim element _ ev = do
         return ()
       else
         return ()
+    --animate :: Int -> JQuery -> IO JQuery
+    --animate = ffi "(function (h, jq) { jq.animate({height: h + 'px'}, 'fast'); return jq; })"
+
+

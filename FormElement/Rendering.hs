@@ -118,6 +118,12 @@ renderInput elemIOJq element context behaviour jq =
           >>= renderElemCell
           >>= renderFlagCell
         >>= JQ.parent
+        >>= appendT "<tr>"
+        >>= inside
+          >>= appendT "<div></div>"
+          >>= setAttrInside "id" (autoCompleteBoxId element)
+          >>= addClassInside "autocomplete-suggestions"
+        >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent
     >>= renderShortDesc element
@@ -149,7 +155,8 @@ renderStringElement element context behaviour jq =
       >>= setAttr "identity" (Element.identity element)
       >>= setAttr "value" (seValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (elementFocusHandler element context behaviour)
+      -- >>= onKeyup (elementFocusHandler element context behaviour)
+      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler (chr 10) element context))
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
   in renderInput elemIOJq element context behaviour jq
@@ -162,16 +169,10 @@ renderTextElement element context behaviour jq =
       >>= setAttr "identity" (Element.identity element)
       >>= setHtml (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler ';' element context))
+      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler (chr 10) element context))
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
-  in
-    renderInput elemIOJq element context behaviour jq
-    >>= appendT "<div></div>"
-    >>= setAttrInside "id" (autoCompleteBoxId element)
-    >>= addClassInside "autocomplete-suggestions"
-
-  -- <select name='sometext' size='5'> <option>text1</option> <option>text2</option> <option>text3</option> <option>text4</option> <option>text5</option> </select></div>"
+  in renderInput elemIOJq element context behaviour jq
 
 renderEmailElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderEmailElement element context behaviour jq =
