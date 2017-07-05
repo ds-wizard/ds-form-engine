@@ -1,17 +1,37 @@
-{-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards, FlexibleInstances, TypeSynonymInstances, CPP #-}
 
 module FormEngine.FormElement.FormElement where
 
 import           Prelude
-import           Data.Text.Lazy (unpack, pack, Text)
 import           Data.Maybe (fromMaybe, mapMaybe, isNothing)
 import           Data.Monoid ((<>))
 
 import           FormEngine.FormItem
 import           FormEngine.FormData
 
+--import Debug.Trace
+
+#ifdef __HASTE__
+type Text = String
+pack :: a -> a
+pack = id
+#else
+import           Data.Text.Lazy (Text, pack)
+--import qualified Data.Text.Lazy as T
+#endif
+
+---------------------------------
+--import Debug.Hood.Observe
+--import GHC.Generics
+---------------------------------
+
 data OptionElement = SimpleOptionElem { schi :: Option, scheSelected :: Bool }
                    | DetailedOptionElem { dchi :: Option, dcheSelected :: Bool , dcheElements :: [FormElement] }
+--instance Observable OptionElement
+
+instance Show OptionElement where
+  show oe@SimpleOptionElem{} = "SimpleOptionElem { optionElemValue=" <> show (optionElemValue oe) <> ", scheSelected=" <> show (scheSelected oe) <> " }"
+  show oe@DetailedOptionElem{} = "DetailedOptionElem { optionElemValue=" <> show (optionElemValue oe) <> ", dcheSelected=" <> show (dcheSelected oe)  <> ", dcheElements=" <> show (dcheElements oe) <>" }"
 
 instance Eq OptionElement where
   oe1 == oe2 = optionItem oe1 Prelude.== optionItem oe2
@@ -28,7 +48,8 @@ optionElemIsSelected SimpleOptionElem{ scheSelected, .. } = scheSelected
 optionElemIsSelected DetailedOptionElem{ dcheSelected, .. } = dcheSelected
 
 type ElemGroupNo = Int
-data ElemGroup = ElemGroup { egElements :: [FormElement], egNumber :: ElemGroupNo }
+data ElemGroup = ElemGroup { egElements :: [FormElement], egNumber :: ElemGroupNo } deriving (Show)
+--instance Observable ElemGroup
 
 data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], visited :: Bool }
                  | StringElem { sfi :: FormItem, seValue :: Text, seGroupNo :: Maybe ElemGroupNo, seParent :: FormElement }
@@ -43,6 +64,7 @@ data FormElement = ChapterElem { chfi :: FormItem, chElements :: [FormElement], 
                  | MultipleGroupElem { mgi :: FormItem, mgeGroups :: [ElemGroup], mgeGroupNo :: Maybe ElemGroupNo, mgeParent :: FormElement }
                  | SaveButtonElem { svi :: FormItem, svParent :: FormElement }
                  | SubmitButtonElem { sbi :: FormItem, sbParent :: FormElement }
+--instance Observable FormElement
 
 instance Eq FormElement where
   e1 == e2 = elementId e1 == elementId e2
@@ -62,20 +84,20 @@ formItem MultipleGroupElem{ mgi, .. } = mgi
 formItem SaveButtonElem{ svi, .. } = svi
 formItem SubmitButtonElem{ sbi, .. } = sbi
 
-groupNo :: FormElement -> Maybe ElemGroupNo
-groupNo ChapterElem{..} = Nothing
-groupNo StringElem{ seGroupNo, .. } = seGroupNo
-groupNo TextElem{ teGroupNo, .. } = teGroupNo
-groupNo EmailElem{ eeGroupNo, .. } = eeGroupNo
-groupNo NumberElem{ neGroupNo, .. } = neGroupNo
-groupNo ChoiceElem{ cheGroupNo, .. } = cheGroupNo
-groupNo InfoElem{..} = Nothing
-groupNo ListElem{ leGroupNo, .. } = leGroupNo
-groupNo SimpleGroupElem{ sgeGroupNo, .. } = sgeGroupNo
-groupNo OptionalGroupElem{ ogeGroupNo, .. } = ogeGroupNo
-groupNo MultipleGroupElem{ mgeGroupNo, .. } = mgeGroupNo
-groupNo SaveButtonElem{..} = Nothing
-groupNo SubmitButtonElem{..} = Nothing
+mGroupNo :: FormElement -> Maybe ElemGroupNo
+mGroupNo ChapterElem{..} = Nothing
+mGroupNo StringElem{ seGroupNo, .. } = seGroupNo
+mGroupNo TextElem{ teGroupNo, .. } = teGroupNo
+mGroupNo EmailElem{ eeGroupNo, .. } = eeGroupNo
+mGroupNo NumberElem{ neGroupNo, .. } = neGroupNo
+mGroupNo ChoiceElem{ cheGroupNo, .. } = cheGroupNo
+mGroupNo InfoElem{..} = Nothing
+mGroupNo ListElem{ leGroupNo, .. } = leGroupNo
+mGroupNo SimpleGroupElem{ sgeGroupNo, .. } = sgeGroupNo
+mGroupNo OptionalGroupElem{ ogeGroupNo, .. } = ogeGroupNo
+mGroupNo MultipleGroupElem{ mgeGroupNo, .. } = mgeGroupNo
+mGroupNo SaveButtonElem{..} = Nothing
+mGroupNo SubmitButtonElem{..} = Nothing
 
 setGroupOfElem :: Maybe ElemGroup -> FormElement -> FormElement
 setGroupOfElem _ element@ChapterElem{..} = element
@@ -99,26 +121,33 @@ setGroupInOption group e@DetailedOptionElem{ dcheElements, .. } = e { dcheElemen
 setGroupInGroup :: Maybe ElemGroup -> ElemGroup -> ElemGroup
 setGroupInGroup parentGr group = group { egElements = map (setGroupOfElem parentGr) (egElements group) }
 
-
 instance Show FormElement where
-  show e@ChapterElem{..} = "ChapterElem id=" <> show (elementId e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@StringElem{ seValue, .. } = "StringElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show seValue
-  show e@TextElem{ teValue, .. } = "TextElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show teValue
-  show e@EmailElem{ eeValue, .. } = "EmailElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show eeValue
-  show e@NumberElem{ neMaybeValue, .. } = "NumberElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show neMaybeValue <> " unit=" <> show neMaybeUnitValue
-  show e@ChoiceElem{..} = "ChoiceElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e)
-  show e@InfoElem{..} = "InfoElem id=" <> show ( elementId e)
-  show e@ListElem{ leMaybeValue, .. } = "ListElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " value=" <> show leMaybeValue
-  show e@SimpleGroupElem{..} = "SimpleGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@OptionalGroupElem{..} = "OptionalGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e) <> " children: " <> show (FormEngine.FormElement.FormElement.children e)
-  show e@MultipleGroupElem{..} = "MultipleGroupElem id=" <> show ( elementId e) <> " groupNo=" <> show (groupNo e)
-  show e@SaveButtonElem{..} = "SaveButtonElem id=" <> show ( elementId e)
-  show e@SubmitButtonElem{..} = "SubmitButtonElem id=" <> show ( elementId e)
+  show e@ChapterElem{..} = "ChapterElem { id=" <> show (elementId e) <> ", children=" <> show (FormEngine.FormElement.FormElement.children e) <> " }"
+  show e@StringElem{ seValue, .. } = "StringElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", value=" <> show seValue <> " }"
+  show e@TextElem{ teValue, .. } = "TextElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", value=" <> show teValue <> " }"
+  show e@EmailElem{ eeValue, .. } = "EmailElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", value=" <> show eeValue <> " }"
+  show e@NumberElem{ neMaybeValue, .. } = "NumberElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", value=" <> show neMaybeValue <> ", unit=" <> show neMaybeUnitValue <> " }"
+  show e@ChoiceElem{..} = "ChoiceElem { id=" <> show ( elementId e) <> ", cheOptions=" <> show cheOptions <> ", mGroupNo=" <> show (mGroupNo e) <> " }"
+  show e@InfoElem{..} = "InfoElem { id=" <> show ( elementId e) <> " }"
+  show e@ListElem{ leMaybeValue, .. } = "ListElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", value=" <> show leMaybeValue <> " }"
+  show e@SimpleGroupElem{..} = "SimpleGroupElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", children=" <> show (FormEngine.FormElement.FormElement.children e) <> " }"
+  show e@OptionalGroupElem{..} = "OptionalGroupElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", children=" <> show (FormEngine.FormElement.FormElement.children e) <> " }"
+  show e@MultipleGroupElem{..} = "MultipleGroupElem { id=" <> show ( elementId e) <> ", mGroupNo=" <> show (mGroupNo e) <> ", mgeGroups=" <> show mgeGroups <> " }"
+  show e@SaveButtonElem{..} = "SaveButtonElem { id=" <> show ( elementId e) <> " }"
+  show e@SubmitButtonElem{..} = "SubmitButtonElem { id=" <> show ( elementId e) <> " }"
+
+elementRawId :: FormElement -> Text
+elementRawId element = fiId $ formItem element
+
+elementGroupId :: FormElement -> Text
+elementGroupId element = case mGroupNo element of
+  Nothing -> ""
+  Just gNo -> "G" <> (pack . show) gNo
 
 elementId :: FormElement -> Text
 elementId element
-  | isNothing $ groupNo element = fiId $ formItem element
-  | otherwise = fiId (formItem element) <> "_G" <> fromMaybe "" (pack . show <$> groupNo element)
+  | isNothing $ mGroupNo element = elementRawId element
+  | otherwise = elementRawId element <> "_" <> elementGroupId element
 
 parentElem :: FormElement -> FormElement
 parentElem element@ChapterElem{} = element
@@ -150,7 +179,6 @@ instance HasChildren FormElement where
   children SimpleGroupElem{ sgeElements, .. } = sgeElements
   children OptionalGroupElem{ ogeElements, .. } = ogeElements
   children MultipleGroupElem{ mgeGroups, .. } = concatMap egElements mgeGroups
-  --children MultipleGroupElem{ mgeGroups, .. } = foldl (\res g -> res ++ egElements g) [] mgeGroups
   children ChoiceElem{ cheOptions, .. } = foldl (\res opt -> res ++ FormEngine.FormElement.FormElement.children opt) [] cheOptions
   children _ = []
 
@@ -182,12 +210,12 @@ rules = iRules . fiDescriptor . formItem
 maybeLink :: FormElement -> Maybe Text
 maybeLink = iLink . fiDescriptor . formItem
 
-maybeStr2maybeFloat :: Maybe String -> Maybe Float
+maybeStr2maybeFloat :: Maybe Text -> Maybe Float
 maybeStr2maybeFloat ms = ms >>= str2maybeFloat
   where
-    str2maybeFloat :: String -> Maybe Float
+    str2maybeFloat :: Text -> Maybe Float
     str2maybeFloat s =
-      let conv = reads s :: [(Float, String)]
+      let conv = reads (show s) :: [(Float, String)]
       in case conv of
         []         -> Nothing
         [(res, _)] -> Just res
@@ -197,7 +225,7 @@ strValue :: FormElement -> Text
 strValue StringElem { seValue, .. } = seValue
 strValue TextElem { teValue, .. } = teValue
 strValue EmailElem { eeValue, .. } = eeValue
-strValue NumberElem { neMaybeValue, .. } = fromMaybe "" (pack . show <$> neMaybeValue)
+strValue NumberElem { neMaybeValue, .. } = pack $ fromMaybe "" (show <$> neMaybeValue)
 strValue ListElem { leMaybeValue, .. } = fromMaybe "" leMaybeValue
 strValue _ = ""
 
@@ -234,7 +262,7 @@ makeElem parent1 maybeGroup maybeFormData item@EmailFI{} = Just EmailElem
   }
 makeElem parent1 maybeGroup maybeFormData item@NumberFI{} = Just NumberElem
   { nfi = item
-  , neMaybeValue = maybeStr2maybeFloat $ unpack <$> getMaybeFFItemValue item maybeFormData
+  , neMaybeValue = maybeStr2maybeFloat $ getMaybeFFItemValue item maybeFormData
   , neMaybeUnitValue = getMaybeNumberFIUnitValue item maybeFormData
   , neGroupNo = egNumber <$> maybeGroup
   , neParent = parent1
@@ -296,12 +324,19 @@ makeElem parent1 maybeGroup maybeFormData item@MultipleGroup{ mgItems, .. } = Ju
     , mgeGroupNo = egNumber <$> maybeGroup
     , mgeParent = parent1
     }
-  groups = map makeGroup (getMaybeMGItemsValues item maybeFormData)
+  groups = let gData = getGroupData item maybeFormData in
+    if null gData then
+      [newGroup0]
+    else
+      map makeGroup (zip [0..] gData)
     where
-    makeGroup :: FormData -> ElemGroup
-    makeGroup groupFormData = ElemGroup { egElements = items, egNumber = 0 }
-      where
-      items = mapMaybe (makeElem multipleGroupElem maybeGroup (Just groupFormData)) mgItems
+      newGroup0 = ElemGroup{ egElements = items0, egNumber = 0 }
+      items0 = mapMaybe (makeElem multipleGroupElem (Just newGroup0) Nothing) mgItems
+      makeGroup :: (Int, FormData) -> ElemGroup
+      makeGroup (gNo, groupFormData) = newGroup
+        where
+        newGroup = ElemGroup{ egElements = items, egNumber = gNo }
+        items = mapMaybe (makeElem multipleGroupElem (Just newGroup) (Just groupFormData)) mgItems
 makeElem parent1 _ _ item@SaveButtonFI{} = Just SaveButtonElem { svi = item, svParent = parent1 }
 makeElem parent1 _ _ item@SubmitButtonFI{} = Just SubmitButtonElem { sbi = item, sbParent = parent1 }
 

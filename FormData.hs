@@ -5,43 +5,38 @@ module FormEngine.FormData
   , FieldValue
   , FieldDatum
   , FormData
-  , respondentKeyFieldId
-  , respondentKeyFieldName
   , getFieldInfos
+  , getName
+  , getGroupNo
   , getMaybeFFItemValue
-  , getMaybeFFKeyValue
   , getMaybeNumberFIUnitValue
-  , getMaybeSelectedChoiceValue
-  , baseName
-  , getMaybeMGItemsValues
+  , getGroupData
   , isCheckboxChecked
   , isOptionSelected
   , values2Data
   ) where
 
-import qualified Data.Set as S
 import Data.Monoid ((<>))
-
+import qualified Data.List as DL
 import FormEngine.FormItem
+--import Debug.Trace
 
-#ifdef __HASTE__
-import           Prelude
-import           Data.Text.Lazy (Text, dropEnd, breakOnAll, breakOnEnd)
---type Text = String
+#ifndef __HASTE__
+import           Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as T
 #else
-import           Data.Text.Lazy (Text, dropEnd, breakOnAll, breakOnEnd)
+import Prelude
+type Text = String
 #endif
+
+---------------------------------
+--import Debug.Hood.Observe
+---------------------------------
 
 type FieldInfo = (Text, Maybe Text) -- (name, mText)
 type FieldValue = (Text, Maybe Text, Maybe Text) -- (name, mText, mValue)
 type FieldDatum = (Text, Text)
 type FormData = [FieldDatum]
-
-respondentKeyFieldId :: Text
-respondentKeyFieldId = "respondent_key_field"
-
-respondentKeyFieldName :: Text
-respondentKeyFieldName = "respondent_key"
 
 getFieldInfos :: [FormItem] -> [FieldInfo]
 getFieldInfos = foldl foldFieldInfo []
@@ -74,51 +69,72 @@ getFieldInfos = foldl foldFieldInfo []
       MultipleGroup{ mgItems, .. } -> getFieldInfos mgItems
       _ -> []
 
-getMaybeFFItemValue :: FormItem -> Maybe FormData -> Maybe Text
-getMaybeFFItemValue item maybeFormData = case maybeFormData of
-  Nothing -> Nothing
-  Just formData -> lookup (fiId item) formData
+#ifdef __HASTE__
+getName :: Text -> Text
+getName key = case DL.elemIndex 'G' key of
+  Nothing -> key
+  Just i -> DL.take (i - 1) key
+#else
+getName :: Text -> Text
+getName key = fst $ T.breakOn "_G" key
+#endif
 
-getMaybeFFKeyValue :: Text -> Maybe FormData -> Maybe Text
-getMaybeFFKeyValue key maybeFormData = case maybeFormData of
-  Nothing -> Nothing
-  Just formData -> lookup key formData
+#ifdef __HASTE__
+getGroupNo :: Text -> Int
+getGroupNo key = case DL.elemIndex 'G' key of
+  Nothing -> 0
+  Just i -> if null readGno then 0 else fst $ head readGno
+    where
+    readGno = reads $ DL.drop (i + 1) key
+#else
+getGroupNo :: Text -> Int
+getGroupNo key = if null readGno then 0 else fst $ head readGno
+    where
+    readGno = reads $ show $ snd $ T.breakOn "_G" key
+#endif
+
+getMaybeFFItemValue :: FormItem -> Maybe FormData -> Maybe Text
+getMaybeFFItemValue item mFormData = --let mFormDataTr = if fiId item == "0_1_0_1_0_0_0_1_0_0_0_3_0_0_0_0_0" then traceShow mFormData mFormData else mFormData in
+  case mFormData of
+    Nothing -> Nothing
+    Just formData -> case DL.find (\(k, _) -> getName k == fiId item) formData of
+      Nothing -> Nothing
+      Just (_, v) -> Just v
 
 getMaybeNumberFIUnitValue :: FormItem -> Maybe FormData -> Maybe Text
-getMaybeNumberFIUnitValue item maybeFormData = case maybeFormData of
+getMaybeNumberFIUnitValue item mFormData = case mFormData of
   Nothing -> Nothing
   Just formData -> let unit = nfiUnit item in
     case unit of
       NoUnit -> Nothing
       SingleUnit l -> Just l
-      MultipleUnit _ -> lookup (nfiUnitId item) formData
+      MultipleUnit _ -> case DL.find (\(k, _) -> getName k == nfiUnitId item) formData of
+        Nothing -> Nothing
+        Just (_, v) -> Just v
 
-getMaybeSelectedChoiceValue :: FormItem -> Maybe FormData -> Maybe Text
-getMaybeSelectedChoiceValue choiceFI = getMaybeFFKeyValue $ fiId choiceFI
-
-baseName :: Text -> Text -- strip the multiple group "_Gx" suffix
-baseName fullName = if null br then fullName else dropEnd 1 n2
-  where
-  br = breakOnAll "G" fullName
-  (n2, _) = head br
-
-getMaybeMGItemsValues :: FormItem -> Maybe FormData -> [FormData]
-getMaybeMGItemsValues item mFormData = case mFormData of
+getGroupData :: FormItem -> Maybe FormData -> [FormData]
+getGroupData multipleGroup@MultipleGroup{} mFormData = case mFormData of
   Nothing -> []
-  Just formData -> map mkDataGroup groupList
+  Just formData -> map mkGroup groups
     where
-    groupList = S.toAscList $ S.fromList $ map ((snd . breakOnEnd "G") . fst) formData
-    mkDataGroup :: Text -> FormData
-    mkDataGroup gNo = filter (\(name, _) -> name == (fiId item <> "_G" <> gNo)) formData
+      fd1 :: FormData
+      fd1 = foldMap (\item ->
+        filter (\(k, _) -> getName k == fiId item) formData
+        ) (childrenClosure multipleGroup)
+      groups :: [Int]
+      groups = if null fd1 then [] else [0..(DL.maximum $ map (getGroupNo . fst) fd1)]
+      mkGroup :: Int -> FormData
+      mkGroup groupNo = filter (\(k, _) -> getGroupNo k == groupNo) fd1
+getGroupData _ _ = []
 
 isCheckboxChecked :: FormItem -> Maybe FormData -> Bool
-isCheckboxChecked item maybeFormData = let maybeRes = getMaybeFFItemValue item maybeFormData in
+isCheckboxChecked item mFormData = let maybeRes = getMaybeFFItemValue item mFormData in
   case maybeRes of
     Nothing -> False
     Just val -> val == "on"
 
 isOptionSelected :: Option -> FormItem -> Maybe FormData -> Bool
-isOptionSelected option item maybeFormData = case getMaybeSelectedChoiceValue item maybeFormData of
+isOptionSelected option item mFormData = case getMaybeFFItemValue item mFormData of
   Nothing -> False
   Just selectedChoiceValue -> selectedChoiceValue == optionValue option
 

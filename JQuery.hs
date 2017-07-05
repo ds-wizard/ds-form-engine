@@ -27,6 +27,9 @@ fireHandler ev jq = do
   ev manualFire
   return jq
 
+getEvKeyCode :: JSAny -> IO String
+getEvKeyCode = ffi "(function (ev) { return ev.keyCode; })"
+
 ready :: IO () -> IO ()
 ready = ffi "(function (f) { jQuery(document).ready(f); })"
 
@@ -101,6 +104,9 @@ setText txt jq = let txtJs = toJSString txt in doFFI txtJs jq
     doFFI :: JSString -> JQuery -> IO JQuery
     doFFI = ffi "(function (txt, jq) { jq.text(txt); return jq; })"
 
+getHtml :: JQuery -> IO String
+getHtml = ffi "(function (domEl) { return domEl.html(); })"
+
 setHtml :: String -> JQuery -> IO JQuery
 setHtml html jq = let htmlJs = toJSString html in doFFI htmlJs jq
   where
@@ -127,6 +133,9 @@ setAttr k v jq = let kJs = toJSString k; vJs = toJSString v in doFFI kJs vJs jq
   where
     doFFI :: JSString -> JSString -> JQuery -> IO JQuery
     doFFI = ffi "(function (k, v, jq) { jq.attr(k, v); return jq; })"
+
+setSelected :: JQuery -> IO JQuery
+setSelected = ffi "(function (jq) { jq.prop('selected', true); return jq; })"
 
 getCss :: String -> JQuery -> IO JSString
 getCss key jq = let keyJs = toJSString key in doFFI keyJs jq
@@ -264,7 +273,18 @@ alertIO str = do
 -- Events ----------------------------------------------------------------
 
 target :: JSAny -> IO JQuery
-target = ffi "(function (js) {return $(js.target); })"
+target = ffi "(function (ev) { return $(ev.target); })"
+
+preventDefault :: JSAny -> IO ()
+preventDefault = ffi "(function (ev) { ev.preventDefault(); })"
+
+setFocus :: JQuery -> IO JQuery
+setFocus jq = do
+  ffifocus jq
+  return jq
+  where
+    ffifocus :: JQuery -> IO ()
+    ffifocus = ffi "(function (jq) { jq.focus(); })"
 
 click :: JQuery -> IO JQuery
 click jq = do
@@ -313,6 +333,14 @@ onKeyup ev jq = do
   where
     ffiKeyup :: Handler -> JQuery -> IO ()
     ffiKeyup = ffi "(function (ev, jq) { jq.keyup(ev); })"
+
+onKeypress :: Handler -> JQuery -> IO JQuery
+onKeypress ev jq = do
+  ffiKeypress ev jq
+  return jq
+  where
+    ffiKeypress :: Handler -> JQuery -> IO ()
+    ffiKeypress = ffi "(function (ev, jq) { jq.keypress(ev); })"
 
 onClick :: Handler -> JQuery -> IO JQuery
 onClick ev jq = do
@@ -435,6 +463,9 @@ setBlurHandler ev jq = inside jq >>= onBlur ev >>= parent
 setKeyupHandler :: Handler -> JQuery -> IO JQuery
 setKeyupHandler ev jq = inside jq >>= onKeyup ev >>= parent
 
+setKeypressHandler :: Handler -> JQuery -> IO JQuery
+setKeypressHandler ev jq = inside jq >>= onKeypress ev >>= parent
+
 setFocusHandler :: Handler -> JQuery -> IO JQuery
 setFocusHandler ev jq = inside jq >>= onFocus ev >>= parent
 
@@ -469,6 +500,9 @@ getWindow = ffi "(function () { return $(window); })"
 
 getTop :: JQuery -> IO Int
 getTop = ffi "(function (jq) { return jq.position().top; })"
+
+getLeft :: JQuery -> IO Int
+getLeft = ffi "(function (jq) { return jq.position().left; })"
 
 toPx :: Int -> String
 toPx val = show val ++ "px"

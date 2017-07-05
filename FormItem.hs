@@ -22,21 +22,28 @@ module FormEngine.FormItem (
 , fiMaybeLabel
 , fiLevel
 , children
+, childrenClosure
 , prepareForm
 ) where
 
 import           Data.Monoid ((<>))
+--import Debug.Trace
 
 #ifdef __HASTE__
-import           Data.Text.Lazy (Text, pack, intercalate)
---import           Data.List (intercalate)
---type Text = String
---pack :: a -> a
---pack = id
+import           Data.List (intercalate)
+type Text = String
+pack :: a -> a
+pack = id
 #else
 import           Data.Text.Lazy (Text, pack, intercalate)
-import           Prelude
 #endif
+
+---------------------------------
+--import Debug.Hood.Observe
+--import GHC.Generics
+--instance Observable Text where
+--  observer = observeBase
+---------------------------------
 
 data Gender = Mr
             | Mrs
@@ -44,6 +51,7 @@ data Gender = Mr
 data Numbering = NoNumbering
                | Numbering [Int] Int -- current sections numbers and level
   deriving (Eq, Show)
+--instance Observable Numbering
 
 type ItemIdentity = Text
 
@@ -51,9 +59,11 @@ data Unit = SingleUnit Text
           | MultipleUnit [Text]
           | NoUnit
   deriving (Eq, Show)
+--instance Observable Unit
 
 newtype Tag = Tag Text
   deriving (Eq, Show)
+--instance Observable Tag
 
 tag2Text :: Tag -> Text
 tag2Text (Tag text) = text
@@ -65,6 +75,7 @@ data FormRule = SumRule [Param] Param -- operands and result Identities
               | CopyValueRule Param Param
               | ReadOnlyRule
               | NumValueRule (Float -> Bool)
+--instance Observable FormRule
 
 instance Show FormRule where
   show (SumRule operands result) = "SumRule @ " ++ show operands ++ " -> " ++ show result
@@ -86,8 +97,10 @@ data FIDescriptor =
          , iLink :: Maybe Text
          , iMandatory :: Bool
          , iRules :: [FormRule]
+         , iAutoComplete :: [Text]
          }
   deriving (Show)
+--instance Observable FIDescriptor
 
 defaultFIDescriptor :: FIDescriptor
 defaultFIDescriptor = FIDescriptor
@@ -102,11 +115,13 @@ defaultFIDescriptor = FIDescriptor
   , iLink = Nothing
   , iMandatory = False
   , iRules = []
+  , iAutoComplete = []
   }
 
 data Option = SimpleOption Text
             | DetailedOption Numbering Text [FormItem]
   deriving (Show)
+--instance Observable Option
 
 instance Eq Option where
   o1 == o2 = optionValue o1 == optionValue o2 -- We assume comparing options just in one ChoiceFI
@@ -129,6 +144,7 @@ data FormItem = StringFI { sfiDescriptor :: FIDescriptor}
               | SaveButtonFI { sviDescriptor :: FIDescriptor }
               | SubmitButtonFI { sbiDescriptor :: FIDescriptor }
   deriving (Show)
+--instance Observable FormItem
 
 isItemMandatory :: FormItem -> Bool
 isItemMandatory = iMandatory . fiDescriptor
@@ -156,7 +172,17 @@ children Chapter{ chItems, .. } = chItems
 children SimpleGroup{ sgItems, .. } = sgItems
 children OptionalGroup{ ogItems, .. } = ogItems
 children MultipleGroup{ mgItems, .. } = mgItems
+children ChoiceFI{ chfiAvailableOptions, .. } = foldMap (\o ->
+  case o of
+    SimpleOption{} -> []
+    DetailedOption _ _ items -> items
+  ) chfiAvailableOptions
 children _ = []
+
+childrenClosure :: FormItem -> [FormItem]
+childrenClosure item = [item] <> foldChildrenClosure
+  where
+  foldChildrenClosure = foldMap childrenClosure $ children item
 
 fiLevel :: FormItem -> Int
 fiLevel SimpleGroup{ sgLevel, .. } = sgLevel

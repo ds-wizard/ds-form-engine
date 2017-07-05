@@ -100,7 +100,7 @@ renderTabGroup tabs panesIOJqs jq =
           >>= inside
             >>= appendT "<a>"
             >>= onClick (tabHandler tab tabs)
-            >>= setTextInside (show $ tabName tab)
+            >>= setTextInside (tabName tab)
          -- >>= click
           >>= JQ.parent
     makeStripe :: JQuery -> IO JQuery
