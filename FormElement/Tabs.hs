@@ -97,12 +97,8 @@ renderTabGroup tabs panesIOJqs jq =
         makeHeading tab jq3 =
           appendT "<li>" jq3
           >>= setAttrInside "id" (tabId tab)
-          >>= inside
-            >>= appendT "<a>"
-            >>= onClick (tabHandler tab tabs)
-            >>= setTextInside (tabName tab)
-         -- >>= click
-          >>= JQ.parent
+          >>= setTextInside (tabName tab)
+          >>= setClickHandler (tabHandler tab tabs)
     makeStripe :: JQuery -> IO JQuery
     makeStripe = appendT "<div class='stripe stripe-thin'>"
     makePanes :: JQuery -> IO JQuery
