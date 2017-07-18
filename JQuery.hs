@@ -513,6 +513,14 @@ selectSVG selector jq = let selectorJs = toJSString selector in doFFI selectorJs
     doFFI :: JSString -> JQuery -> IO JQuery
     doFFI = ffi "(function (selector, jq) { if (jq[0].contentDocument !== null) { var res = $(selector, jq[0].contentDocument.documentElement); if (res.length === 0) { console.warn('empty $ selection ' + selector); }; return res; } else return jq; })"
 
+-- AJAX ---------------------------------------------
+
+serialize :: JQuery -> IO String
+serialize = ffi "(function (jq) { return jq.serialize(); })"
+
+ajaxSubmitForm :: JQuery -> (Maybe String -> IO ()) -> IO ()
+ajaxSubmitForm = ffi "(function (jq, fn) { $.ajax({ type: 'POST', url: jq.attr('action'), data: jq.serialize(), success: fn, }); })"
+
 -- Profiling -----------------------------------------
 
 time :: String -> IO ()
