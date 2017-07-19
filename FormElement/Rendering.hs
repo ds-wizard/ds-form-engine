@@ -23,6 +23,24 @@ import FormEngine.FormContext
 import FormEngine.Functionality
 import FormEngine.FormElement.AutoComplete (autoCompleteHandler)
 
+foldElements :: [FormElement] -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+foldElements elems context behaviour jq = foldlM (\jq1 e -> renderElement e context behaviour jq1) jq elems
+
+renderElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+renderElement element@SimpleGroupElem{} context behaviour jq = renderSimpleGroup element context behaviour jq
+renderElement element@OptionalGroupElem{} context behaviour jq = renderOptionalGroup element context behaviour jq
+renderElement element@MultipleGroupElem{} context behaviour jq = renderMultipleGroup element context behaviour jq
+renderElement element@StringElem{} context behaviour jq = renderStringElement element context behaviour jq
+renderElement element@TextElem{} context behaviour jq = renderTextElement element context behaviour jq
+renderElement element@EmailElem{} context behaviour jq = renderEmailElement element context behaviour jq
+renderElement element@NumberElem{} context behaviour jq = renderNumberElement element context behaviour jq
+renderElement element@ChoiceElem{} context behaviour jq = renderChoiceElement element context behaviour jq
+renderElement element@InfoElem{} context behaviour jq = renderInfoElement element context behaviour jq
+renderElement element@ListElem{} context behaviour jq = renderListElement element context behaviour jq
+renderElement element@SaveButtonElem{} context _ jq = renderSaveButtonElement element context jq
+renderElement element@SubmitButtonElem{} context _ jq = renderSubmitButtonElement element context jq
+renderElement _ _ _ jq = errorjq "renderElement did not unify" jq
+
 setLongDescription :: FormElement -> IO ()
 setLongDescription element = do
   paragraphJq <- select $ "#" ++ descSubpaneParagraphId element
@@ -57,26 +75,12 @@ elementBlurHandler element context behaviour _ = do
   case blurAction behaviour of
     Nothing -> return ()
     Just action -> action element context
--- handleItemMouseEnter :: FormItem -> FormItem -> Handler
--- handleItemMouseEnter = handleItemFocus
 
-foldElements :: [FormElement] -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
-foldElements elems context behaviour jq = foldlM (\jq1 e -> renderElement e context behaviour jq1) jq elems
-
-renderElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
-renderElement element@SimpleGroupElem{} context behaviour jq = renderSimpleGroup element context behaviour jq
-renderElement element@OptionalGroupElem{} context behaviour jq = renderOptionalGroup element context behaviour jq
-renderElement element@MultipleGroupElem{} context behaviour jq = renderMultipleGroup element context behaviour jq
-renderElement element@StringElem{} context behaviour jq = renderStringElement element context behaviour jq
-renderElement element@TextElem{} context behaviour jq = renderTextElement element context behaviour jq
-renderElement element@EmailElem{} context behaviour jq = renderEmailElement element context behaviour jq
-renderElement element@NumberElem{} context behaviour jq = renderNumberElement element context behaviour jq
-renderElement element@ChoiceElem{} context behaviour jq = renderChoiceElement element context behaviour jq
-renderElement element@InfoElem{} context behaviour jq = renderInfoElement element context behaviour jq
-renderElement element@ListElem{} context behaviour jq = renderListElement element context behaviour jq
-renderElement element@SaveButtonElem{} context _ jq = renderSaveButtonElement element context jq
-renderElement element@SubmitButtonElem{} context _ jq = renderSubmitButtonElement element context jq
-renderElement _ _ _ jq = errorjq "renderElement did not unify" jq
+elementClickHandler :: FormElement -> FormContext -> ElemBehaviour -> Handler
+elementClickHandler element context behaviour _ =
+  case clickAction behaviour of
+    Nothing -> return ()
+    Just action -> action element context
 
 renderLabel :: FormElement -> JQuery -> IO JQuery
 renderLabel element jq =
@@ -156,9 +160,10 @@ renderStringElement element context behaviour jq =
       >>= setAttr "value" (seValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
       -- >>= onKeyup (elementFocusHandler element context behaviour)
-      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler (chr 10) element context))
+      >>= onKeyup (handlerCombinator [elementFocusHandler element context behaviour, autoCompleteHandler (chr 10) element context])
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
+      >>= onClick (elementClickHandler element context behaviour)
   in renderInput elemIOJq element context behaviour jq
 
 renderTextElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
@@ -169,9 +174,10 @@ renderTextElement element context behaviour jq =
       >>= setAttr "identity" (Element.identity element)
       >>= setHtml (teValue element)
       >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (handlerCombinator (elementFocusHandler element context behaviour) (autoCompleteHandler (chr 10) element context))
+      >>= onKeyup (handlerCombinator [elementFocusHandler element context behaviour, autoCompleteHandler (chr 10) element context])
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
+      >>= onClick (elementClickHandler element context behaviour)
   in renderInput elemIOJq element context behaviour jq
 
 renderEmailElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
@@ -185,6 +191,7 @@ renderEmailElement element context behaviour jq =
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
+      >>= onClick (elementClickHandler element context behaviour)
   in renderInput elemIOJq element context behaviour jq
 
 renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
@@ -199,6 +206,7 @@ renderNumberElement element context behaviour jq =
       >>= onKeyup (elementFocusHandler element context behaviour)
       >>= onBlur (elementBlurHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
+      >>= onClick (elementClickHandler element context behaviour)
       >>= appendT "&nbsp;"
       >>= case nfiUnit (formItem element) of
         NoUnit -> return
@@ -232,6 +240,7 @@ renderListElement element context behaviour jq =
       >>= onBlur (elementFocusHandler element context behaviour)
       >>= onChange (elementFocusHandler element context behaviour)
       >>= onMouseLeave (elementBlurHandler element context behaviour)
+      >>= onClick (elementClickHandler element context behaviour)
       >>= renderOptions
   in
     renderInput selectIOJq element context behaviour jq
@@ -273,8 +282,8 @@ choiceValidateHandler element context _ = do
   updateValidityFlag element context isSelected
   -- Now a hack, needs to get the validity from the instances
 
-renderRadio :: FormElement -> OptionElement -> FormContext -> JQuery -> IO JQuery
-renderRadio element optionElem context jq =
+renderRadio :: FormElement -> OptionElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
+renderRadio element optionElem context behaviour jq =
   --dumptIO (optionElemValue optionElem)
    -- dumptIO (choiceIisSelected choiceI)
   appendT "<input type='radio'>" jq
@@ -283,7 +292,11 @@ renderRadio element optionElem context jq =
   >>= setAttrInside "identity" (Element.identity element)
   >>= setAttrInside "value" (optionElemValue optionElem)
   >>= (if optionElemIsSelected optionElem then setAttrInside "checked" "checked" else return)
-  >>= setClickHandler (handlerCombinator (choiceSwitchHandler element optionElem) (choiceValidateHandler element context))
+  >>= setClickHandler (handlerCombinator
+    [ choiceSwitchHandler element optionElem
+    , choiceValidateHandler element context
+    , elementClickHandler element context behaviour
+    ])
   >>= setMouseLeaveHandler (choiceValidateHandler element context)
   >>= appendT "<label>"
   >>= setTextInside (optionElemValue optionElem)
@@ -306,7 +319,7 @@ renderChoiceElement element context behaviour jq =
       where
       renderButton :: OptionElement -> JQuery -> IO JQuery
       renderButton optionElem jq2 =
-        renderRadio element optionElem context jq2
+        renderRadio element optionElem context behaviour jq2
         >>= (if optionElem == Prelude.last (cheOptions element) then return else appendT "<br>")
     renderPanes :: [OptionElement] -> JQuery -> IO JQuery
     renderPanes optionElems jq1 = foldlM (flip renderPane) jq1 optionElems
@@ -330,7 +343,7 @@ renderInfoElement element _ _ jq =
       >>= inside
         >>= appendT "<tr>"
         >>= inside
-          >>= appendT "<td class='more-space info' colspan='2'>"
+          >>= appendT "<td class='more-space intro' colspan='2'>"
           >>= setTextInside (ifiText $ formItem element)
         >>= JQ.parent
       >>= JQ.parent
@@ -368,7 +381,7 @@ renderOptionalGroup element context behaviour  jq = let lvl = Element.level elem
     appendT "<input type='checkbox'>" jq1
     >>= setAttrInside "name" (elementId element)
     >>= (if ogeChecked element then setAttrInside "checked" "checked" else return)
-    >>= setClickHandler handler
+    >>= setClickHandler (handlerCombinator [handler, elementClickHandler element context behaviour])
     >>= renderLabel element
     where
     handler ev = do
@@ -406,8 +419,8 @@ renderMultipleGroup element context behaviour jq = let lvl = Element.level eleme
   renderMgGroups groups jq1 = foldlM (flip renderMgGroup) jq1 groups
 
   renderMgGroup :: ElemGroup -> JQuery -> IO JQuery
-  renderMgGroup group jq2 = do
-    --dumptIO $ show $ getGroupNo $ elementId $ head $ egElements group
+  renderMgGroup group jq2 =
+   --dumptIO $ show $ getGroupNo $ elementId $ head $ egElements group
     --dumptIO $ show $ head $ egElements group
     appendT "<table>" jq2 >>= inside -- MG item holder
       >>= appendT "<tbody>" >>= inside

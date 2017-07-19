@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module FormEngine.FormContext (FormContext(..)) where
+module FormEngine.FormContext where
 
-import           FormEngine.FormElement.FormElement as E
+import FormEngine.FormElement.FormElement (FormElement)
 
 data FormContext =
        FormContext

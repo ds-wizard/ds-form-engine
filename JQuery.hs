@@ -14,10 +14,8 @@ type JQuery = Elem
 type EventType = String
 type Handler = (JSAny -> IO ())
 
-handlerCombinator :: Handler -> Handler -> Handler
-handlerCombinator handler1 handler2 ev = do
-  handler1 ev
-  handler2 ev
+handlerCombinator :: [Handler] -> Handler
+handlerCombinator handlers ev = mapM_ (\handler -> handler ev) handlers
 
 manualFire :: JSAny
 manualFire = toAny ("manual fire" :: JSString)
