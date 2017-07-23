@@ -4,7 +4,7 @@ module FormEngine.JQuery where
 
 import Prelude hiding (last)
 import Data.Monoid ((<>))
-import Haste.DOM (Elem, ElemID, PropID)
+import Haste.DOM (Elem, ElemID, PropID, document)
 import Haste.Foreign
 import Haste
 
@@ -39,11 +39,23 @@ readyJq jq fun = do
     ffiReadyJq :: JQuery -> IO () -> IO ()
     ffiReadyJq = ffi "(function (jq, f) { jq.ready(f); })"
 
+documentJq :: JQuery
+documentJq = document
+
+toJq :: Elem -> IO JQuery
+toJq = ffi "(function (el) { return $(el); })"
+
 parseHTML :: String -> IO JQuery
 parseHTML el = let elJs = toJSString el in doFFI elJs
   where
     doFFI :: JSString -> IO JQuery
     doFFI = ffi "(function (elId) { return $.parseHTML(elId); })"
+
+elemExists :: String -> IO Bool
+elemExists el = let elJs = toJSString el in doFFI elJs
+  where
+    doFFI :: JSString -> IO Bool
+    doFFI = ffi "(function (el) { return $(el).length > 0; })"
 
 selectNoCheck :: String -> IO JQuery
 selectNoCheck el = let elJs = toJSString el in doFFI elJs
@@ -269,6 +281,17 @@ alertIO str = do
     ffiLog = ffi "(function (s) { alert(s); })"
 
 -- Events ----------------------------------------------------------------
+
+jqEvOff :: String -> JQuery -> IO JQuery
+jqEvOff str jq = do
+  ffiOff (toJSString str) jq
+  return jq
+  where
+    ffiOff :: JSString -> JQuery -> IO ()
+    ffiOff = ffi "(function (ev,jq) { jq.off(ev); })"
+
+jqEvAllOff :: JQuery -> IO JQuery
+jqEvAllOff = ffi "(function (jq) { jq.off(); })"
 
 target :: JSAny -> IO JQuery
 target = ffi "(function (ev) { return $(ev.target); })"
