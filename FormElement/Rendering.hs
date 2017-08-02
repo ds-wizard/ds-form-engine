@@ -134,7 +134,7 @@ renderInput elemIOJq element context behaviour jq =
     where
     renderQuestionDetails detFunc jq1 = appendT "<td>" jq1
         >>= inside
-          >>= addClass "more-space"
+          >>= addClass "more-space functionality"
           >>= appendT (funcImg detFunc)
           >>= setClickHandler (\_ -> funcAction detFunc element context)
         >>= JQ.parent
