@@ -12,6 +12,7 @@ import Data.Monoid ((<>))
 import Data.Foldable (foldlM)
 import Data.Maybe (fromMaybe)
 import Data.Char (chr)
+--import Debug.Trace (traceShow)
 --import Haste.DOM
 
 import FormEngine.JQuery as JQ
@@ -197,21 +198,22 @@ renderEmailElement element context behaviour jq =
 renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> IO JQuery
 renderNumberElement element context behaviour jq =
   let
-    elemIOJq = select "<input type='number'>"
-      >>= setAttr "id" (elementId element)
-      >>= setAttr "name" (elementId element)
-      >>= setAttr "identity" (Element.identity element)
-      >>= setAttr "value"  (fromMaybe "" $ show <$> neMaybeValue element)
-      >>= onMouseEnter (elementFocusHandler element context behaviour)
-      >>= onKeyup (elementFocusHandler element context behaviour)
-      >>= onBlur (elementBlurHandler element context behaviour)
-      >>= onMouseLeave (elementBlurHandler element context behaviour)
-      >>= onClick (elementClickHandler element context behaviour)
-      >>= appendT "&nbsp;"
+    elemIOJq = select "<span></span>"
+      >>= appendT "<input type='number'>"
+      >>= setAttrInside "id" (elementId element)
+      >>= setAttrInside "name" (elementId element)
+      >>= setAttrInside "identity" (Element.identity element)
+      >>= setAttrInside "value"  (fromMaybe "" $ show <$> neMaybeValue element)
+      >>= setMouseEnterHandler (elementFocusHandler element context behaviour)
+      >>= setKeyupHandler (elementFocusHandler element context behaviour)
+      >>= setBlurHandler (elementBlurHandler element context behaviour)
+      >>= setMouseLeaveHandler (elementBlurHandler element context behaviour)
+      >>= setChangeHandler (elementClickHandler element context behaviour)
+      >>= appendT "&nbsp; "
       >>= case nfiUnit (formItem element) of
         NoUnit -> return
-        SingleUnit u -> appendT $ show u
-        MultipleUnit units -> renderUnits (map show units)
+        SingleUnit u -> appendT u
+        MultipleUnit units -> renderUnits units
       where
         renderUnits :: [String] -> JQuery -> IO JQuery
         renderUnits units jq1 = foldlM (flip renderUnit) jq1 units
@@ -251,8 +253,8 @@ renderListElement element context behaviour jq =
       renderOption :: (String, String) -> JQuery -> IO JQuery
       renderOption (listVal, label) jq2 =
         appendT "<option>" jq2
-        >>= setAttrInside "value" (show listVal)
-        >>= setTextInside (show label)
+        >>= setAttrInside "value" listVal
+        >>= setTextInside label
         >>= case leMaybeValue element of
           Nothing -> return
           Just selectedOption -> if listVal == selectedOption then setAttrInside "selected" "selected" else return
