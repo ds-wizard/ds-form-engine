@@ -92,8 +92,6 @@ data FIDescriptor =
          , iTags :: [Tag]
          , iShortDescription :: Maybe Text
          , iLongDescription :: Maybe Text
-         , chapterId :: Maybe Int
-         , questionId :: Maybe Int
          , iLink :: Maybe Text
          , iMandatory :: Bool
          , iRules :: [FormRule]
@@ -110,8 +108,6 @@ defaultFIDescriptor = FIDescriptor
   , iTags = []
   , iShortDescription = Nothing
   , iLongDescription = Nothing
-  , chapterId = Nothing
-  , questionId = Nothing
   , iLink = Nothing
   , iMandatory = False
   , iRules = []
