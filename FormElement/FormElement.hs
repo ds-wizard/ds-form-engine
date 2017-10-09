@@ -1,6 +1,37 @@
 {-# LANGUAGE OverloadedStrings, NamedFieldPuns, RecordWildCards, FlexibleInstances, TypeSynonymInstances, CPP #-}
 
-module FormEngine.FormElement.FormElement where
+module FormEngine.FormElement.FormElement
+  ( OptionElement(..)
+  , optionItem
+  , optionElemValue
+  , optionElemIsSelected
+  , ElemGroup(..)
+  , FormElement(..)
+  , FormEngine.FormElement.FormElement.children
+  , formItem
+  , mGroupNo
+  , setGroupOfElem
+  , setGroupInOption
+  , setGroupInGroup
+  , elementRawId
+  , elementGroupId
+  , elementId
+  , parentElem
+  , elemChapter
+  , isMandatory
+  , maybeLabel
+  , tags
+  , level
+  , numbering
+  , identity
+  , rules
+  , maybeLink
+  , maybeStr2maybeFloat
+  , strValue
+  , makeChapter
+  , makeElem
+  , numberElem2TB
+  ) where
 
 import           Prelude
 import           Data.Maybe (fromMaybe, mapMaybe, isNothing)

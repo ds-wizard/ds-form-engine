@@ -33,7 +33,7 @@ validateElement element@NumberElem{ neMaybeValue, neMaybeUnitValue, .. } = value
     MultipleUnit _ -> isJust neMaybeUnitValue
 validateElement ChoiceElem{ chefi, cheOptions, .. } =
   let
-    selectionOK = if isItemMandatory chefi then any optionElemIsSelected cheOptions else True
+    selectionOK = (not (isItemMandatory chefi) || any optionElemIsSelected cheOptions)
     itemsOK = all (== True) $ map validateChoiceElement cheOptions
       where
       validateChoiceElement :: OptionElement -> Bool
