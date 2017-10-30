@@ -199,7 +199,7 @@ renderNumberElement :: FormElement -> FormContext -> ElemBehaviour -> JQuery -> 
 renderNumberElement element context behaviour jq =
   let
     elemIOJq = select "<span></span>"
-      >>= appendT "<input type='number'>"
+      >>= appendT "<input type='number' step='0.1'>"
       >>= setAttrInside "id" (elementId element)
       >>= setAttrInside "name" (elementId element)
       >>= setAttrInside "identity" (Element.identity element)
