@@ -246,7 +246,7 @@ maybeStr2maybeFloat ms = ms >>= str2maybeFloat
   where
     str2maybeFloat :: Text -> Maybe Float
     str2maybeFloat s =
-      let conv = reads (show s) :: [(Float, String)]
+      let conv = reads s :: [(Float, String)]
       in case conv of
         []         -> Nothing
         [(res, _)] -> Just res
