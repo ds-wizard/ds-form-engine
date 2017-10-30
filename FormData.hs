@@ -94,7 +94,7 @@ getGroupNo key = if null readGno then 0 else fst $ head readGno
 #endif
 
 getMaybeFFItemValue :: FormItem -> Maybe FormData -> Maybe Text
-getMaybeFFItemValue item mFormData = --let mFormDataTr = if fiId item == "0_1_0_1_0_0_0_1_0_0_0_3_0_0_0_0_0" then traceShow mFormData mFormData else mFormData in
+getMaybeFFItemValue item mFormData = --let mFormDataTr = if fiId item == "1_0_0_0_0_0" then traceShow mFormData mFormData else mFormData in
   case mFormData of
     Nothing -> Nothing
     Just formData -> case DL.find (\(k, _) -> getName k == fiId item) formData of
