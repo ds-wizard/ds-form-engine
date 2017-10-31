@@ -359,7 +359,7 @@ renderSimpleGroup element context behaviour  jq = let lvl = Element.level elemen
   >>= setAttrInside "level" (show lvl)
   >>= (if lvl > 1 then addClassInside "framed" else return)
   >>= inside
-    >>= renderHeading (show <$> Element.maybeLabel element) lvl
+    >>= renderHeading (Element.maybeLabel element) lvl
     >>= renderShortDesc element
     >>= foldElements (sgeElements element) context behaviour
   >>= JQ.parent
@@ -491,7 +491,7 @@ renderSaveButtonElement element _ jq =
       >>= appendT "<tr>" >>= inside
         >>= appendT "<td class='labeltd more-space' style='text-align: center'>" >>= inside
           >>= appendT "<input type='submit'>"
-          >>= setAttrInside "value" (fromMaybe "Save" (show <$> Element.maybeLabel element))
+          >>= setAttrInside "value" (fromMaybe "Submit" (show <$> Element.maybeLabel element))
         >>= JQ.parent
       >>= JQ.parent
     >>= JQ.parent
