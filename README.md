@@ -18,7 +18,6 @@ This project is licensed under the Apache License v2.0 - see the [LICENSE](LICEN
 ### Functionality
 - Recursive validation of group elements
 - Submission validation
-- MultipleGroup implementation
 
 ### Refactoring
 - refactor for speed using direct DOM or server-side rendering
