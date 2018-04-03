@@ -26,10 +26,4 @@ This project is licensed under the Apache License v2.0 - see the [LICENSE](LICEN
 
 Project supported by
 
-[![ELIXIR-CZ logo](https://raw.githubusercontent.com/DataStewardshipPortal/ds-elixir-cz/master/static/img/logo.jpg)](https://www.elixir-czech.cz/)
-
-----
-
-Built with support of
-
-[![ELIXIR-CZ logo](https://raw.githubusercontent.com/DataStewardshipPortal/ds-elixir-cz/master/static/img/logo.jpg)](https://www.elixir-czech.cz/)
+[![ELIXIR-CZ logo](https://www.elixir-europe.org/sites/default/files/images/elixir_czechrepublic_white_background.png)](https://www.elixir-czech.cz/)
